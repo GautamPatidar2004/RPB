@@ -120,9 +120,9 @@ class RailwayOptimizerService:
     ) -> List[MaintenanceRequestItem]:
         """Calls Prompt 5 ML batch predictor to enrich requests with duration, risk, and impact."""
         try:
-            from models.batch_predictor import get_batch_predictor
-
-            predictor = get_batch_predictor()
+            import importlib
+            batch_predictor_module = importlib.import_module("models.batch_predictor")
+            predictor = batch_predictor_module.get_batch_predictor()
             candidates_payload = []
             for r in requests:
                 candidates_payload.append({

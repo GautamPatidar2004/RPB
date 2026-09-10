@@ -256,10 +256,9 @@ class ConstraintEngine:
         overriding safety constraints.
         """
         try:
-            from models.loader import get_model_loader
-            from models.batch_predictor import get_batch_predictor
-
-            predictor = get_batch_predictor()
+            import importlib
+            batch_predictor_module = importlib.import_module("models.batch_predictor")
+            predictor = batch_predictor_module.get_batch_predictor()
             item_payload = {
                 "candidate_id": candidate.candidate_id,
                 "corridor_code": candidate.corridor_code,
