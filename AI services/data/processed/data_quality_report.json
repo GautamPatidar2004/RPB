@@ -1,0 +1,73 @@
+{
+  "dataset_name": "railway_block_planning_ml",
+  "generated_at": "2026-09-10T06:23:59.240081+00:00",
+  "record_count": 2,
+  "duplicate_count": 0,
+  "invalid_record_count": 0,
+  "missing_value_summary": {},
+  "feature_availability": {
+    "feat_maint_type": "str",
+    "feat_department": "str",
+    "feat_asset_type": "str",
+    "feat_priority": "int64",
+    "feat_power_block_req": "int64",
+    "feat_traffic_block_req": "int64",
+    "feat_speed_restriction_kmph": "float64",
+    "feat_work_complexity_score": "float64",
+    "feat_corridor_length_km": "float64",
+    "feat_corridor_electrified": "int64",
+    "feat_corridor_double_line": "int64",
+    "feat_section_span_km": "float64",
+    "feat_dependency_count": "int64",
+    "feat_asset_criticality": "str",
+    "feat_asset_criticality_score": "int64",
+    "feat_asset_health_status": "str",
+    "feat_asset_health_score": "int64",
+    "feat_task_urgency": "str",
+    "feat_task_urgency_score": "int64",
+    "feat_days_until_required": "float64",
+    "feat_is_overdue": "int64",
+    "feat_task_priority_score": "int64",
+    "feat_train_traffic_count": "int64",
+    "feat_high_priority_train_count": "int64",
+    "feat_high_priority_train_ratio": "float64",
+    "feat_available_window_count": "int64",
+    "feat_total_available_window_minutes": "int64",
+    "feat_window_to_task_duration_ratio": "float64",
+    "feat_potential_train_conflicts": "int64"
+  },
+  "target_availability": {
+    "target_maintenance_duration": {
+      "label_type": "ground_truth",
+      "count": 2,
+      "missing": 0,
+      "min": 90.0,
+      "max": 180.0,
+      "mean": 135.0,
+      "std": 63.64
+    },
+    "target_asset_risk_priority": {
+      "label_type": "derived_label",
+      "count": 2,
+      "missing": 0,
+      "min": 53.25,
+      "max": 87.75,
+      "mean": 70.5,
+      "std": 24.4
+    },
+    "target_operational_impact": {
+      "label_type": "derived_label",
+      "count": 2,
+      "missing": 0,
+      "min": 55.0,
+      "max": 65.0,
+      "mean": 60.0,
+      "std": 7.07
+    }
+  },
+  "dataset_readiness_status": "READY_FOR_TRAINING",
+  "recommendations": [
+    "Dataset contains clean baseline records from active railway corridor.",
+    "Suitable for Prompt 3 synthetic dataset augmentation or Prompt 4 ML modeling."
+  ]
+}
