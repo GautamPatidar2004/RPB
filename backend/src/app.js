@@ -26,6 +26,26 @@ app.use((req, res, next) => {
 // Parse JSON bodies
 app.use(express.json());
 
+// Root endpoint
+app.get('/', (req, res) => {
+    res.status(200).json({
+        success: true,
+        service: 'Indian Railways Automatic Block Planning API',
+        version: '1.0.0',
+        status: 'OPERATIONAL',
+        endpoints: {
+            health: '/api/health',
+            auth: '/api/auth',
+            corridors: '/api/corridors',
+            plans: '/api/plans',
+            maintenance_tasks: '/api/maintenance-tasks',
+            train_movements: '/api/train-movements',
+            sync: '/api/sync'
+        },
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.status(200).json({
