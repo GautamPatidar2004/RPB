@@ -1,7 +1,7 @@
 from enum import Enum
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class ConflictType(str, Enum):
@@ -48,14 +48,14 @@ class TrainMovementSummary(BaseModel):
     scheduled_end_time: datetime
     is_high_priority: bool = False
 
-    @field_validator("is_high_priority", mode="before")
-    @classmethod
-    def determine_high_priority(cls, v: Any, info) -> bool:
-        if v is not None and isinstance(v, bool):
-            return v
-        prio = info.data.get("priority", 3)
-        t_type = str(info.data.get("train_type", "")).upper()
-        return prio <= 2 or t_type in {"VANDE_BHARAT", "RAJDHANI", "SHATABDI"}
+    @model_validator(mode="after")
+    def check_priority(self) -> "TrainMovementSummary":
+        if not self.is_high_priority:
+            prio = self.priority
+            t_type = str(self.train_type).upper()
+            if prio <= 2 or t_type in {"VANDE_BHARAT", "RAJDHANI", "SHATABDI"}:
+                self.is_high_priority = True
+        return self
 
 
 class BlockWindowSummary(BaseModel):
@@ -88,7 +88,7 @@ class BlockCandidate(BaseModel):
     end_kilometer: float = Field(default=1.0, ge=0.0, description="End kilometer point on corridor")
     start_time: datetime = Field(..., description="Assigned block start timestamp")
     end_time: datetime = Field(..., description="Assigned block end timestamp")
-    duration_minutes: float = Field(..., gt=0.0, description="Calculated duration in minutes")
+    duration_minutes: float = Field(default=0.0, description="Calculated duration in minutes")
     priority: int = Field(default=3, ge=1, le=5, description="Priority rating (1=highest, 5=routine)")
     power_block_required: bool = Field(default=False, description="Whether OHE power shutoff is mandatory")
     traffic_block_required: bool = Field(default=True, description="Whether train traffic halt is mandatory")
@@ -113,12 +113,12 @@ class BlockCandidate(BaseModel):
     @field_validator("duration_minutes", mode="before")
     @classmethod
     def calculate_duration(cls, v: Any, info) -> float:
-        if v is not None and float(v) > 0:
-            return float(v)
         st = info.data.get("start_time")
         et = info.data.get("end_time")
         if isinstance(st, datetime) and isinstance(et, datetime):
             return round((et - st).total_seconds() / 60.0, 1)
+        if v is not None:
+            return float(v)
         return 120.0
 
 

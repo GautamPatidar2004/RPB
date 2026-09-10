@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev": "nodemon index.js",
+    "start": "node index.js",
     "test": "node test_auth.js && node test_core_apis.js && node test_sync_gateway.js && node test_ai_gateway.js && node test_planning_workflow.js && node test_production_audit.js",
     "test:auth": "node test_auth.js",
     "test:core": "node test_core_apis.js",

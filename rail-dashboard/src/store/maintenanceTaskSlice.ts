@@ -45,9 +45,13 @@ const initialState: MaintenanceTaskState = {
 
 export const fetchMaintenanceTasks = createAsyncThunk(
   'maintenanceTasks/fetchAll',
-  async (params: { corridorId?: string; status?: string; department?: string } = {}, { rejectWithValue }) => {
+  async (params: { corridorId?: string; corridor_id?: string; status?: string; department?: string } = {}, { rejectWithValue }) => {
     try {
-      const res = await apiClient.get('/api/maintenance-tasks', { params });
+      const queryParams: any = { ...params };
+      if (params.corridorId && !queryParams.corridor_id) {
+        queryParams.corridor_id = params.corridorId;
+      }
+      const res = await apiClient.get('/api/maintenance-tasks', { params: queryParams });
       return res.data;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message ?? 'Failed to load maintenance tasks.');

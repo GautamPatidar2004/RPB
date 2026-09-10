@@ -21,7 +21,12 @@ from api.routes import (
     data_connection_router,
     data_pipeline_router,
     synthetic_router,
-    prediction_router
+    prediction_router,
+    constraints_router,
+    optimizer_router,
+    scoring_router,
+    explanation_router,
+    planning_router
 )
 
 logger = get_logger("ai_service_main")
@@ -89,6 +94,11 @@ def create_app() -> FastAPI:
     app.include_router(data_pipeline_router)
     app.include_router(synthetic_router)
     app.include_router(prediction_router)
+    app.include_router(constraints_router)
+    app.include_router(optimizer_router)
+    app.include_router(scoring_router)
+    app.include_router(explanation_router)
+    app.include_router(planning_router)
 
     return app
 

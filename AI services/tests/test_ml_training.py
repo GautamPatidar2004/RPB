@@ -128,7 +128,9 @@ def test_evaluator_classification_metrics():
 
 def test_saved_artifacts_exist_and_loadable():
     """Verifies that the trained Prompt 4 artifacts exist on disk and can be loaded."""
-    v1_dir = Path("AI services/models/saved_models/v1")
+    v1_dir = Path(__file__).resolve().parent.parent / "models" / "saved_models" / "v1"
+    if not v1_dir.exists():
+        v1_dir = Path("AI services/models/saved_models/v1")
     assert (v1_dir / "duration_model.json").exists()
     assert (v1_dir / "risk_model.json").exists()
     assert (v1_dir / "impact_model.json").exists()

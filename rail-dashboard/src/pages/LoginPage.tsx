@@ -31,7 +31,7 @@ export const LoginPage: React.FC = () => {
 
   const fillDemo = (acc: DemoAccount) => {
     setUsername(acc.username);
-    setPassword(acc.password);
+    setPassword(acc.password || acc.hint || '');
   };
 
   return (

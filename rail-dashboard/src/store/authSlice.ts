@@ -13,10 +13,11 @@ export interface AuthUser {
 
 export interface DemoAccount {
   username: string;
-  password: string;
+  password?: string;
+  hint?: string;
   role: string;
-  fullName: string;
-  designation: string;
+  fullName?: string;
+  designation?: string;
 }
 
 interface AuthState {
@@ -106,7 +107,7 @@ const authSlice = createSlice({
       .addCase(fetchDemoAccounts.pending, (state) => { state.demoAccountsLoading = true; })
       .addCase(fetchDemoAccounts.fulfilled, (state, action: PayloadAction<any>) => {
         state.demoAccountsLoading = false;
-        state.demoAccounts = action.payload?.data ?? action.payload?.accounts ?? [];
+        state.demoAccounts = action.payload?.demoAccounts ?? action.payload?.data ?? action.payload?.accounts ?? [];
       })
       .addCase(fetchDemoAccounts.rejected, (state) => { state.demoAccountsLoading = false; });
 

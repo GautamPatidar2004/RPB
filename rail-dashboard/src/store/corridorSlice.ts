@@ -61,6 +61,21 @@ export const fetchCorridorSummary = createAsyncThunk(
   }
 );
 
+function mapApiCorridor(c: any): Corridor {
+  return {
+    id: c.id,
+    code: c.code,
+    name: c.name,
+    zone: c.zone ?? '',
+    division: c.division ?? '',
+    startStation: c.startStation ?? c.start_station ?? '',
+    endStation: c.endStation ?? c.end_station ?? '',
+    lengthKm: Number(c.lengthKm ?? c.total_length_km ?? 0),
+    electrified: Boolean(c.electrified),
+    lineType: c.lineType ?? c.line_type ?? 'DOUBLE',
+  };
+}
+
 const corridorSlice = createSlice({
   name: 'corridors',
   initialState,
@@ -74,7 +89,8 @@ const corridorSlice = createSlice({
       .addCase(fetchCorridors.pending, (state) => { state.isLoading = true; state.error = null; })
       .addCase(fetchCorridors.fulfilled, (state, action: PayloadAction<any>) => {
         state.isLoading = false;
-        const list = action.payload?.data ?? action.payload?.corridors ?? [];
+        const raw = action.payload?.data ?? action.payload?.corridors ?? [];
+        const list = raw.map(mapApiCorridor);
         state.corridors = list;
         // Auto-select first corridor
         if (list.length > 0 && !state.selectedCorridorId) {
