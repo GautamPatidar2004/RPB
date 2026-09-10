@@ -6,6 +6,8 @@ const router = express.Router();
 
 // Public auth endpoints
 router.post('/login', (req, res) => authController.login(req, res));
+router.post('/signup', (req, res) => authController.signup(req, res));
+router.post('/register', (req, res) => authController.signup(req, res));
 router.get('/demo-accounts', (req, res) => authController.getDemoAccounts(req, res));
 
 // Authenticated session endpoints

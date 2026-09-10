@@ -30,6 +30,44 @@ class AuthController {
     }
 
     /**
+     * POST /api/auth/signup
+     */
+    async signup(req, res) {
+        try {
+            const { username, email, password, role, fullName, designation, department } = req.body || {};
+            const userIdentifier = username || email;
+            if (!userIdentifier || !password) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Username/email and password are required'
+                });
+            }
+
+            const { token, user } = await authService.signup({
+                username: userIdentifier,
+                email,
+                password,
+                role,
+                fullName,
+                designation,
+                department
+            });
+
+            return res.status(201).json({
+                success: true,
+                message: `Account created successfully as ${user.role}`,
+                token,
+                user
+            });
+        } catch (err) {
+            return res.status(400).json({
+                success: false,
+                error: err.message || 'Signup failed'
+            });
+        }
+    }
+
+    /**
      * POST /api/auth/logout
      */
     async logout(req, res) {

@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { verifyPassword } = require('../utils/password');
+const { verifyPassword, hashPassword } = require('../utils/password');
 const { pool } = require('../config/db');
 
 // In-memory session store: token -> session data
@@ -8,6 +8,18 @@ const sessions = new Map();
 
 // Canonical demo accounts with pre-hashed scrypt passwords
 const DEMO_USERS = [
+    {
+        id: '44444444-4444-4444-4444-444444444444',
+        username: 'gautam@example.com',
+        email: 'gautam@example.com',
+        role: 'Admin',
+        fullName: 'Gautam Patidar',
+        designation: 'Chief Operations & Planning Engineer (Admin)',
+        department: 'ENGG',
+        employeeId: 'IR-ADM-002',
+        // Password: Gautam123
+        passwordHash: 'ec4776b50982995892d660d7906b62f9:69a1440ff23e657dfeb7c6aeed1163f9b5fd405bbc1e3119dadda8c0a47c235be39ce7d55c3cffc36c6be81def983a0b0835d9b2f7a4cedc829035343ebea528'
+    },
     {
         id: '11111111-1111-1111-1111-111111111111',
         username: 'admin',
@@ -147,10 +159,44 @@ class AuthService {
     }
 
     /**
+     * Create a new user signup
+     */
+    async signup({ username, email, password, role = 'Admin', fullName = 'Gautam Patidar', designation = 'Chief Planning Engineer (Admin)', department = 'ENGG' }) {
+        const idKey = (username || email || '').trim().toLowerCase();
+        if (!idKey || !password) {
+            throw new Error('Username/email and password are required');
+        }
+
+        const existing = await this.findUserByUsername(idKey);
+        if (existing) {
+            throw new Error('User already exists');
+        }
+
+        const passwordHash = hashPassword(password);
+        const newUser = {
+            id: crypto.randomUUID(),
+            username: idKey,
+            email: idKey,
+            role,
+            fullName,
+            designation,
+            department,
+            employeeId: `IR-${role.substring(0, 3).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`,
+            passwordHash
+        };
+
+        DEMO_USERS.unshift(newUser);
+
+        // Auto authenticate and generate session
+        return this.authenticate(newUser.username, password);
+    }
+
+    /**
      * Metadata of available demo accounts
      */
     getDemoAccounts() {
         return [
+            { username: 'gautam@example.com', role: 'Admin', hint: 'Gautam123', designation: 'Chief Planning Engineer (Admin)' },
             { username: 'admin', role: 'Admin', hint: 'Admin@123', designation: 'System Administrator' },
             { username: 'planner', role: 'Planner', hint: 'Planner@123', designation: 'Sr. Section Engineer (Planning)' },
             { username: 'operations', role: 'Operations', hint: 'Operations@123', designation: 'Chief Controller (Operating)' }
