@@ -5,7 +5,7 @@ import { fetchCorridors, fetchCorridorSummary } from './store/corridorSlice';
 import { fetchTrainMovements } from './store/trainScheduleSlice';
 import { fetchMaintenanceTasks, fetchMaintenanceTaskSummary } from './store/maintenanceTaskSlice';
 import { fetchSyncStatus } from './store/syncSlice';
-import { fetchPlans } from './store/planSlice';
+import { fetchPlans, checkAIEngineHealth } from './store/planSlice';
 import { fetchBlockWindows } from './store/blockWindowSlice';
 import { fetchAssets, fetchAssetSummary } from './store/assetSlice';
 import { LoginPage } from './pages/LoginPage';
@@ -45,6 +45,22 @@ function App() {
     dispatch(fetchBlockWindows({ corridor_id: selectedCorridorId }));
     dispatch(fetchAssets({ corridor_id: selectedCorridorId }));
   }, [isAuthenticated, selectedCorridorId, dispatch]);
+
+  // AI Engine health check — run shortly after auth, then poll every 30s.
+  // The 1s delay lets the backend and HMR settle before the first probe.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const initialDelay = setTimeout(() => {
+      dispatch(checkAIEngineHealth());
+    }, 1000);
+    const healthInterval = setInterval(() => {
+      dispatch(checkAIEngineHealth());
+    }, 30000);
+    return () => {
+      clearTimeout(initialDelay);
+      clearInterval(healthInterval);
+    };
+  }, [isAuthenticated, dispatch]);
 
   // Auto-refresh live data every 60 seconds
   useEffect(() => {

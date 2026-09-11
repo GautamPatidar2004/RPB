@@ -128,6 +128,14 @@ export const GlobalTelemetryBar: React.FC<GlobalTelemetryBarProps> = ({
 
   // Connection badge styling
   const renderConnectionStatus = (state: PlanningTelemetryState) => {
+    if (state === 'IDLE') {
+      return (
+        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold tracking-wider bg-slate-500/20 text-slate-400 border border-slate-500/40">
+          <RefreshCw size={11} className="animate-spin" />
+          CONNECTING...
+        </span>
+      );
+    }
     if (isGenerating || state === 'CALCULATING') {
       return (
         <span className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/40 animate-pulse">
@@ -148,7 +156,7 @@ export const GlobalTelemetryBar: React.FC<GlobalTelemetryBarProps> = ({
       return (
         <span className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold tracking-wider bg-rose-500/20 text-rose-400 border border-rose-500/40">
           <AlertTriangle size={11} />
-          ERROR
+          DISCONNECTED
         </span>
       );
     }
