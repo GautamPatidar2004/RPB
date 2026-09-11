@@ -74,25 +74,25 @@ export const DepartmentRequestQueue: React.FC<DepartmentRequestQueueProps> = ({
   const getPriorityBadgeClass = (priority: number) => {
     if (priority === 1) return 'bg-rose-950 text-rose-300 border-rose-700 font-bold';
     if (priority === 2) return 'bg-amber-950 text-amber-300 border-amber-700 font-semibold';
-    return 'bg-slate-800 text-slate-300 border-slate-700';
+    return 'bg-slate-100 text-slate-700 border-slate-300';
   };
 
   return (
-    <div className="bg-slate-950 border border-slate-800 rounded-lg flex flex-col h-full shadow-inner select-none overflow-hidden">
+    <div className="bg-white border border-slate-200 rounded-lg flex flex-col h-full shadow-sm select-none overflow-hidden">
       {/* QUEUE HEADER */}
-      <div className="p-3 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between">
+      <div className="p-3 border-b border-slate-200 bg-slate-50/60 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="p-1 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
             <Wrench size={14} />
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+            <div className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
               Department Request Queue
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-700 border border-slate-300">
                 {queueItems.length}
               </span>
             </div>
-            <div className="text-[10px] text-slate-400">Incoming demands from BDMS, TDMS, SMMS</div>
+            <div className="text-[10px] text-slate-500">Incoming demands from BDMS, TDMS, SMMS</div>
           </div>
         </div>
 
@@ -108,10 +108,10 @@ export const DepartmentRequestQueue: React.FC<DepartmentRequestQueueProps> = ({
       </div>
 
       {/* SELECTION ACTIONS */}
-      <div className="px-3 py-1.5 bg-slate-900/30 border-b border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+      <div className="px-3 py-1.5 bg-slate-50/30 border-b border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
         <button
           onClick={() => (allSelected ? dispatch(clearSelectedTasks()) : dispatch(selectAllPendingTasks()))}
-          className="flex items-center gap-1.5 hover:text-slate-200 transition"
+          className="flex items-center gap-1.5 hover:text-slate-800 transition"
         >
           {allSelected ? <CheckSquare size={13} className="text-purple-400" /> : <Square size={13} />}
           <span>{allSelected ? 'Deselect All' : 'Select All Eligible'}</span>
@@ -142,7 +142,7 @@ export const DepartmentRequestQueue: React.FC<DepartmentRequestQueueProps> = ({
                 className={`p-2.5 transition-colors cursor-pointer flex items-start gap-2.5 ${
                   isSelectedRow
                     ? 'bg-purple-950/40 border-l-2 border-purple-500'
-                    : 'hover:bg-slate-900/50'
+                    : 'hover:bg-slate-50/50'
                 }`}
               >
                 {/* Checkbox */}
@@ -152,7 +152,7 @@ export const DepartmentRequestQueue: React.FC<DepartmentRequestQueueProps> = ({
                     e.stopPropagation();
                     dispatch(toggleTaskSelection(task.id));
                   }}
-                  className="mt-0.5 text-slate-400 hover:text-purple-400 transition"
+                  className="mt-0.5 text-slate-500 hover:text-purple-400 transition"
                 >
                   {isSelectedForBatch ? (
                     <CheckSquare size={14} className="text-purple-400" />
@@ -164,7 +164,7 @@ export const DepartmentRequestQueue: React.FC<DepartmentRequestQueueProps> = ({
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1.5 mb-1">
-                    <span className="font-mono text-xs font-bold text-slate-200 truncate">
+                    <span className="font-mono text-xs font-bold text-slate-800 truncate">
                       {task.task_code || task.taskCode || task.title}
                     </span>
                     <span
@@ -176,13 +176,13 @@ export const DepartmentRequestQueue: React.FC<DepartmentRequestQueueProps> = ({
                     </span>
                   </div>
 
-                  <div className="text-[11px] text-slate-300 font-medium truncate mb-1">
+                  <div className="text-[11px] text-slate-700 font-medium truncate mb-1">
                     {task.title || `${task.department} Maintenance Task`}
                   </div>
 
                   {/* Metadata Chips */}
-                  <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-400">
-                    <span className="px-1 py-0.2 rounded bg-slate-800 text-slate-300 font-mono">
+                  <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500">
+                    <span className="px-1 py-0.2 rounded bg-slate-100 text-slate-700 font-mono">
                       {task.department}
                     </span>
                     <span className={`px-1 py-0.2 rounded border ${getPriorityBadgeClass(task.priority)}`}>
