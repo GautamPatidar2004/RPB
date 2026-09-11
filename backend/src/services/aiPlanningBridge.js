@@ -536,6 +536,27 @@ class AIPlanningBridge {
         try {
             aiResponse = await this.callAIService(aiPayload, mockAISender);
 
+            if (aiResponse && aiResponse.pipeline_status === 'NO_FEASIBLE_PLAN') {
+                await db.query(`
+                    UPDATE planning_runs
+                    SET status = 'COMPLETED', failure_reason = 'NO_FEASIBLE_WINDOW_ASSIGNMENT', updated_at = NOW()
+                    WHERE planning_run_id = $1
+                `, [runId]);
+
+                for (const taskId of inputRequestIds) {
+                    await db.query("UPDATE maintenance_tasks SET status = 'POSTPONED' WHERE id = $1", [taskId]);
+                }
+
+                return {
+                    success: true,
+                    planningRunId: runId,
+                    status: 'COMPLETED_WITH_UNSCHEDULED_TASKS',
+                    scheduledCount: 0,
+                    unscheduledCount: inputRequestIds.length,
+                    message: aiResponse.message || 'No tasks could be scheduled within available block windows.'
+                };
+            }
+
             if (!aiResponse || (aiResponse.pipeline_status !== 'SUCCESS' && aiResponse.pipeline_status !== 'OPTIMAL' && aiResponse.pipeline_status !== 'DEGRADED')) {
                 const statusReason = aiResponse ? (aiResponse.message || aiResponse.pipeline_status) : 'Empty AI response';
                 throw new Error(`AI Planning Pipeline failed to generate feasible plan: ${statusReason}`);
