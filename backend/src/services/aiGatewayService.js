@@ -410,7 +410,25 @@ class AIGatewayService {
         if (planRes.rows.length === 0) return null;
         const plan = planRes.rows[0];
 
-        const tasksRes = await db.query('SELECT * FROM block_plan_tasks WHERE plan_id = $1 ORDER BY sequence_order ASC', [planId]);
+        const tasksRes = await db.query(`
+            SELECT 
+                bpt.*,
+                mt.task_code,
+                mt.title,
+                mt.department,
+                mt.priority,
+                mt.line_designation,
+                mt.start_kilometer,
+                mt.end_kilometer,
+                mt.requested_duration,
+                mt.duration_minutes,
+                mt.power_block_required,
+                mt.source_system
+            FROM block_plan_tasks bpt
+            LEFT JOIN maintenance_tasks mt ON bpt.maintenance_task_id = mt.id
+            WHERE bpt.plan_id = $1 
+            ORDER BY bpt.sequence_order ASC
+        `, [planId]);
         const conflictsRes = await db.query('SELECT * FROM conflicts WHERE plan_id = $1 ORDER BY created_at ASC', [planId]);
 
         return {

@@ -1,22 +1,63 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import apiClient from '../services/apiClient';
 
-// API-sourced maintenance task (from /api/maintenance-tasks)
 export interface MaintenanceTask {
   id: string;
+  task_code?: string;
+  taskCode?: string;
+  request_id?: string;
   title: string;
   description: string;
-  department: string; // 'ENGG' | 'SNT' | 'TRD'
-  sourceSystem: string;
-  corridorId: string;
-  assetId: string | null;
-  status: 'PENDING' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'DEFERRED';
+  department: string; // 'ENGG' | 'SNT' | 'TRD' | 'CIVIL' | 'ELECTRICAL' | 'SIGNAL'
+  department_code?: string;
+  sourceSystem?: string;
+  source_system?: string;
+  corridorId?: string;
+  corridor_id?: string;
+  assetId?: string | null;
+  asset_id?: string | null;
+  asset?: {
+    id?: string;
+    asset_code?: string;
+    asset_type?: string;
+    name?: string;
+    location?: string;
+    start_kilometer?: number;
+    end_kilometer?: number;
+    criticality?: string;
+  } | null;
+  defect?: {
+    id?: string;
+    defect_code?: string;
+    defect_type?: string;
+    severity?: string;
+    failure_risk?: string;
+  } | null;
+  status: 'INCOMING' | 'PENDING' | 'PLANNING' | 'SCHEDULED' | 'POSTPONED' | 'REJECTED' | 'IN_PROGRESS' | 'COMPLETED' | 'DEFERRED';
   priority: number;
-  trafficBlockRequired: boolean;
-  powerBlockRequired: boolean;
-  estimatedDurationMinutes: number;
-  requiredByBefore: string | null;
-  createdAt: string;
+  criticality?: string;
+  severity?: string;
+  urgency?: string;
+  maintenance_type?: string;
+  maintenanceType?: string;
+  trafficBlockRequired?: boolean;
+  traffic_block_required?: boolean;
+  powerBlockRequired?: boolean;
+  power_block_required?: boolean;
+  speed_restriction_kmph?: number;
+  duration_minutes?: number;
+  requested_duration?: number;
+  estimatedDurationMinutes?: number;
+  requiredByBefore?: string | null;
+  required_by_date?: string | null;
+  preferred_window?: any;
+  required_resources?: any;
+  operational_constraints?: any;
+  location?: string;
+  start_kilometer?: number;
+  end_kilometer?: number;
+  createdAt?: string;
+  created_at?: string;
 }
 
 export interface MaintenanceTaskSummary {
@@ -33,15 +74,21 @@ export interface MaintenanceTaskSummary {
 
 interface MaintenanceTaskState {
   tasks: MaintenanceTask[];
+  pendingTasks: MaintenanceTask[];
+  selectedTaskIds: string[];
   summary: MaintenanceTaskSummary | null;
   isLoading: boolean;
+  isLoadingPending: boolean;
   error: string | null;
 }
 
 const initialState: MaintenanceTaskState = {
   tasks: [],
+  pendingTasks: [],
+  selectedTaskIds: [],
   summary: null,
   isLoading: false,
+  isLoadingPending: false,
   error: null,
 };
 
@@ -57,6 +104,18 @@ export const fetchMaintenanceTasks = createAsyncThunk(
       return res.data;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message ?? 'Failed to load maintenance tasks.');
+    }
+  }
+);
+
+export const fetchPendingTasks = createAsyncThunk(
+  'maintenanceTasks/fetchPending',
+  async (params: { corridor_code?: string; corridor_id?: string; department?: string } | void, { rejectWithValue }) => {
+    try {
+      const res = await apiClient.get('/api/maintenance-tasks/pending', { params: params || {} });
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message ?? 'Failed to load pending maintenance queue.');
     }
   }
 );
@@ -88,7 +147,22 @@ export const patchMaintenanceTaskStatus = createAsyncThunk(
 const maintenanceTaskSlice = createSlice({
   name: 'maintenanceTasks',
   initialState,
-  reducers: {},
+  reducers: {
+    toggleTaskSelection: (state, action: PayloadAction<string>) => {
+      const id = action.payload;
+      if (state.selectedTaskIds.includes(id)) {
+        state.selectedTaskIds = state.selectedTaskIds.filter(item => item !== id);
+      } else {
+        state.selectedTaskIds.push(id);
+      }
+    },
+    selectAllPendingTasks: (state) => {
+      state.selectedTaskIds = state.pendingTasks.map(t => t.id);
+    },
+    clearSelectedTasks: (state) => {
+      state.selectedTaskIds = [];
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchMaintenanceTasks.pending, (state) => { state.isLoading = true; state.error = null; })
@@ -101,10 +175,19 @@ const maintenanceTaskSlice = createSlice({
         state.error = action.payload as string;
       });
 
+    builder
+      .addCase(fetchPendingTasks.pending, (state) => { state.isLoadingPending = true; })
+      .addCase(fetchPendingTasks.fulfilled, (state, action: PayloadAction<any>) => {
+        state.isLoadingPending = false;
+        state.pendingTasks = action.payload?.data ?? [];
+      })
+      .addCase(fetchPendingTasks.rejected, (state) => {
+        state.isLoadingPending = false;
+      });
+
     builder.addCase(fetchMaintenanceTaskSummary.fulfilled, (state, action: PayloadAction<any>) => {
       const raw = action.payload?.summary ?? action.payload?.data ?? null;
       if (raw) {
-        // Normalize backend field names (pending_count) to frontend interface (pending)
         state.summary = {
           total: raw.total_tasks ?? raw.total ?? 0,
           pending: raw.pending_count ?? raw.pending ?? 0,
@@ -121,4 +204,5 @@ const maintenanceTaskSlice = createSlice({
   },
 });
 
+export const { toggleTaskSelection, selectAllPendingTasks, clearSelectedTasks } = maintenanceTaskSlice.actions;
 export default maintenanceTaskSlice.reducer;

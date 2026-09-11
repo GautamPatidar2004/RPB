@@ -7,6 +7,13 @@ const router = express.Router();
 // Generate / Request AI planning job (Weekly / Monthly / Custom)
 router.post('/generate', requireAuth, requireRole('Planner', 'Admin'), (req, res) => planningController.requestPlanningJob(req, res));
 
+// Planning Runs (Standardized AI Planning Run Ingestion & Execution)
+router.post('/planning-runs', requireAuth, requireRole('Planner', 'Admin'), (req, res) => planningController.createPlanningRun(req, res));
+router.post('/submit-planning-run', requireAuth, requireRole('Planner', 'Admin'), (req, res) => planningController.createPlanningRun(req, res));
+router.get('/planning-runs', requireAuth, (req, res) => planningController.listPlanningRuns(req, res));
+router.get('/planning-runs/:runId', requireAuth, (req, res) => planningController.getPlanningRun(req, res));
+router.post('/planning-runs/:runId/generate', requireAuth, requireRole('Planner', 'Admin'), (req, res) => planningController.generatePlanForRun(req, res));
+
 // List block plans with date-range, weekly/monthly, and corridor filters
 router.get('/', requireAuth, (req, res) => planningController.getPlans(req, res));
 

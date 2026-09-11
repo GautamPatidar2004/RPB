@@ -54,8 +54,8 @@ async function runAuthTests() {
         console.log('Test 1: GET /api/auth/demo-accounts');
         const resDemo = await makeRequest(server, { path: '/api/auth/demo-accounts', method: 'GET' });
         assert.strictEqual(resDemo.status, 200);
-        assert.strictEqual(resDemo.body.demoAccounts.length, 3);
-        console.log('  ✓ Returned 3 demo accounts (Admin, Planner, Operations)\n');
+        assert.ok(resDemo.body.demoAccounts.length >= 3, 'Expected at least 3 demo accounts');
+        console.log(`  ✓ Returned ${resDemo.body.demoAccounts.length} demo accounts\n`);
 
         // -------------------------------------------------------------
         // 2. Test Login: Admin

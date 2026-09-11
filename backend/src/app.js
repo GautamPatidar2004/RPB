@@ -9,6 +9,7 @@ const trainMovementRoutes = require('./routes/trainMovementRoutes');
 const syncRoutes = require('./routes/syncRoutes');
 const aiGatewayRoutes = require('./routes/aiGatewayRoutes');
 const planningRoutes = require('./routes/planningRoutes');
+const planningRunRoutes = require('./routes/planningRunRoutes');
 
 const app = express();
 
@@ -61,11 +62,13 @@ app.use('/api/demo', demoProtectedRoutes);
 app.use('/api/corridors', corridorRoutes);
 app.use('/api/assets', assetRoutes);
 app.use('/api/maintenance-tasks', maintenanceTaskRoutes);
+app.use('/api/maintenance-requests', maintenanceTaskRoutes);
 app.use('/api/block-windows', blockWindowRoutes);
 app.use('/api/train-movements', trainMovementRoutes);
 app.use('/api/sync', syncRoutes);
 app.use('/api/v1/ai', aiGatewayRoutes);
 app.use('/api/plans', planningRoutes);
+app.use('/api/planning-runs', planningRunRoutes);
 
 // 404 handler
 app.use((req, res) => {

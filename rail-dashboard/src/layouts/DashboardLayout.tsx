@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Map, Calendar, Activity, Settings, LogOut,
   Bell, RefreshCw, Train, Wrench, Filter, ChevronRight,
-  ChevronDown, Loader, DatabaseZap
+  ChevronDown, Loader, DatabaseZap, Radio
 } from 'lucide-react';
 import { LinearTrackView } from '../components/LinearTrackView';
 import { BlockGanttChart } from '../components/BlockGanttChart';
+import { SectionControllerDashboard } from '../components/SectionControllerDashboard/SectionControllerDashboard';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { useRailWebSockets } from '../hooks/useRailWebSockets';
 import { logoutUser } from '../store/authSlice';
@@ -44,7 +45,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const approvedCount = blocks.filter(b => b.status === 'APPROVED').length;
   const criticalAssets = assetSummary?.critical ?? 0;
 
-  const [activeNav, setActiveNav] = useState('overview');
+  const [activeNav, setActiveNav] = useState('controller');
   const [showCorridorMenu, setShowCorridorMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
@@ -93,8 +94,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     try {
       await dispatch(generatePlan({
         corridorCode: selectedCorridor.code,
-        horizonMode: 'WEEKLY',
-        startDate: new Date().toISOString(),
+        corridorId: selectedCorridor.id,
+        horizonStart: new Date().toISOString(),
+        executeNow: true,
       })).unwrap();
       
       // Immediately refresh the dashboard data to show the new AI plan
@@ -105,10 +107,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   };
 
   const navItems = [
-    { id: 'overview', icon: <LayoutDashboard size={16} />, label: 'Overview' },
-    { id: 'track',    icon: <Map size={16} />,             label: 'Track Schematics' },
-    { id: 'gantt',    icon: <Calendar size={16} />,        label: 'Block Planning' },
-    { id: 'live',     icon: <Activity size={16} />,        label: 'Live Operations' },
+    { id: 'controller', icon: <Radio size={16} />,        label: 'Section Controller' },
+    { id: 'overview',   icon: <LayoutDashboard size={16} />, label: 'Overview' },
+    { id: 'track',      icon: <Map size={16} />,             label: 'Track Schematics' },
+    { id: 'gantt',      icon: <Calendar size={16} />,        label: 'Block Planning' },
+    { id: 'live',       icon: <Activity size={16} />,        label: 'Live Operations' },
   ];
 
   // Role-based: only Planner + Admin can generate plans
@@ -132,7 +135,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         {/* Corridor badge / selector */}
         <div style={{ margin: '12px 12px 4px', position: 'relative' }}>
           <button
-            onClick={() => setShowCorridorMenu(p => !p)}
+            onClick={() => setShowCorridorMenu((p: boolean) => !p)}
             style={{ width: '100%', padding: '8px 12px', background: 'var(--accent-amber-light)', border: '1px solid #fde68a', borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}
           >
             <div style={{ textAlign: 'left' }}>
@@ -231,8 +234,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
       {/* ── Main Area ────────────────────────────────────────── */}
       <div className="main-area">
-        {/* Header */}
-        <header className="top-header">
+        {/* Header - Hidden in Section Controller mode to avoid clutter */}
+        {activeNav !== 'controller' && (
+          <header className="top-header">
           <div className="header-left">
             <div>
               <div className="header-title">
@@ -314,11 +318,22 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             </div>
           </div>
         </header>
+        )}
 
         {/* Dashboard Grid */}
-        <main className="dashboard-content">
+        <main 
+          className="dashboard-content"
+          style={activeNav === 'controller' ? { display: 'flex', padding: 0, overflow: 'hidden', height: '100%', background: '#050914' } : {}}
+        >
           {children ? children : (
             <>
+              {/* ── Section Controller Command Dashboard (Prompt 4) ─────────── */}
+              {activeNav === 'controller' && (
+                <div style={{ flex: 1, height: '100%', width: '100%', overflow: 'hidden' }}>
+                  <SectionControllerDashboard />
+                </div>
+              )}
+
               {/* ── Overview or Track View ─────────── */}
               {(activeNav === 'overview' || activeNav === 'track') && (
                 <div className="panel" style={activeNav === 'track' ? { flex: 1 } : {}}>

@@ -1,8 +1,13 @@
 const db = require('../config/db');
+const maintenanceIngestionService = require('../services/maintenanceIngestionService');
 
 const VALID_TASK_STATUSES = [
+    'INCOMING',
     'PENDING',
+    'PLANNING',
     'SCHEDULED',
+    'POSTPONED',
+    'REJECTED',
     'IN_PROGRESS',
     'COMPLETED',
     'CANCELLED',
@@ -14,8 +19,9 @@ class MaintenanceTaskController {
      * GET /api/maintenance-tasks
      * Query params: corridor_id, asset_id, department_id, source_system, status, priority, criticality, required_by_before, required_by_after
      */
-    async list(req, res) {
+    async list(req, res, overrides = {}) {
         try {
+            const query = { ...req.query, ...overrides };
             const {
                 corridor_id,
                 asset_id,
@@ -26,7 +32,7 @@ class MaintenanceTaskController {
                 criticality,
                 required_by_before,
                 required_by_after
-            } = req.query;
+            } = query;
 
             const queryText = `
                 SELECT 
@@ -187,6 +193,50 @@ class MaintenanceTaskController {
             console.error('[MaintenanceTaskController.updateStatus]:', err);
             return res.status(500).json({ success: false, error: 'Failed to update maintenance task status' });
         }
+    }
+
+    /**
+     * POST /api/maintenance-tasks/ingest or POST /api/maintenance-tasks
+     * Accepts a single request or array of requests from any source (DEMO, BDMS, TDMS, SMMS)
+     */
+    async ingest(req, res) {
+        try {
+            const payload = req.body;
+            if (Array.isArray(payload)) {
+                const results = await maintenanceIngestionService.ingestBatch(payload);
+                return res.status(201).json({
+                    success: true,
+                    message: `Ingested ${results.ingested} of ${results.total} maintenance requests`,
+                    ...results
+                });
+            } else if (payload && typeof payload === 'object') {
+                const ingested = await maintenanceIngestionService.ingestRequest(payload);
+                return res.status(201).json({
+                    success: true,
+                    message: `Maintenance request [${ingested.task_code || ingested.request_id}] ingested successfully`,
+                    data: ingested
+                });
+            } else {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Request body must be a valid maintenance request object or array of requests'
+                });
+            }
+        } catch (err) {
+            console.error('[MaintenanceTaskController.ingest]:', err);
+            return res.status(400).json({
+                success: false,
+                error: err.message || 'Failed to ingest maintenance request'
+            });
+        }
+    }
+
+    /**
+     * GET /api/maintenance-tasks/pending
+     * Query pending maintenance requests queue ready for planning
+     */
+    async listPending(req, res) {
+        return this.list(req, res, { status: 'PENDING' });
     }
 }
 

@@ -309,6 +309,9 @@ const memoryDb = {
         }
     ],
     sync_runs: [],
+    defects: [],
+    planning_runs: [],
+    maintenance_dependencies: [],
     block_plans: [],
     block_plan_tasks: [],
     conflicts: [],
@@ -389,7 +392,16 @@ function handleMemoryQuery(sql, params) {
     }
 
     // 2. ASSETS
-    if (/(?:FROM|UPDATE)\s+assets/i.test(cleanSql)) {
+    if (/(?:FROM|UPDATE|DELETE)\s+(?:FROM\s+)?assets/i.test(cleanSql)) {
+        if (/DELETE\s+FROM\s+assets/i.test(cleanSql)) {
+            if (/corridor_id\s*=\s*\$1/i.test(cleanSql)) {
+                memoryDb.assets = memoryDb.assets.filter(a => a.corridor_id !== params[0] || (a.metadata?.dataSourceType !== 'DEMO' && a.metadata?.data_source_type !== 'DEMO'));
+            } else {
+                memoryDb.assets = memoryDb.assets.filter(a => a.metadata?.dataSourceType !== 'DEMO' && a.metadata?.data_source_type !== 'DEMO');
+            }
+            return { rows: [] };
+        }
+
         if (/UPDATE\s+assets/i.test(cleanSql)) {
             const assetId = params[1];
             const newHealth = params[0];
@@ -446,10 +458,29 @@ function handleMemoryQuery(sql, params) {
     }
 
     // 3. MAINTENANCE TASKS
-    if (/(?:FROM|UPDATE)\s+maintenance_tasks/i.test(cleanSql)) {
+    if (/(?:FROM|UPDATE|DELETE)\s+(?:FROM\s+)?maintenance_tasks/i.test(cleanSql)) {
+        if (/DELETE\s+FROM\s+maintenance_tasks/i.test(cleanSql)) {
+            if (/corridor_id\s*=\s*\$1/i.test(cleanSql)) {
+                memoryDb.maintenance_tasks = memoryDb.maintenance_tasks.filter(t => t.corridor_id !== params[0] || (t.operational_constraints?.dataSourceType !== 'DEMO' && t.operational_constraints?.data_source_type !== 'DEMO'));
+            } else {
+                memoryDb.maintenance_tasks = memoryDb.maintenance_tasks.filter(t => t.operational_constraints?.dataSourceType !== 'DEMO' && t.operational_constraints?.data_source_type !== 'DEMO');
+            }
+            return { rows: [] };
+        }
+
         if (/UPDATE\s+maintenance_tasks/i.test(cleanSql)) {
-            const taskId = params[1];
-            const newStatus = params[0];
+            let taskId, newStatus;
+            if (/SET\s+status\s*=\s*'([A-Z_]+)'\s+WHERE\s+id\s*=\s*\$1/i.test(cleanSql)) {
+                const m = cleanSql.match(/SET\s+status\s*=\s*'([A-Z_]+)'\s+WHERE\s+id\s*=\s*\$1/i);
+                newStatus = m[1];
+                taskId = params[0];
+            } else if (/SET\s+status\s*=\s*\$1.*WHERE\s+id\s*=\s*\$2/i.test(cleanSql)) {
+                newStatus = params[0];
+                taskId = params[1];
+            } else {
+                newStatus = params[0];
+                taskId = params[1] || params[0];
+            }
             const task = memoryDb.maintenance_tasks.find(t => t.id === taskId && !t.deleted_at);
             if (task) {
                 task.status = newStatus;
@@ -464,8 +495,12 @@ function handleMemoryQuery(sql, params) {
             return {
                 rows: [{
                     total_tasks: activeTasks.length,
+                    incoming_count: activeTasks.filter(t => t.status === 'INCOMING').length,
                     pending_count: activeTasks.filter(t => t.status === 'PENDING').length,
+                    planning_count: activeTasks.filter(t => t.status === 'PLANNING').length,
                     scheduled_count: activeTasks.filter(t => t.status === 'SCHEDULED').length,
+                    postponed_count: activeTasks.filter(t => t.status === 'POSTPONED').length,
+                    rejected_count: activeTasks.filter(t => t.status === 'REJECTED').length,
                     in_progress_count: activeTasks.filter(t => t.status === 'IN_PROGRESS').length,
                     completed_count: activeTasks.filter(t => t.status === 'COMPLETED').length,
                     priority_1_urgent_count: activeTasks.filter(t => t.priority === 1).length,
@@ -478,6 +513,21 @@ function handleMemoryQuery(sql, params) {
         if (/WHERE\s+t\.id\s*=\s*\$1/i.test(cleanSql) || /WHERE\s+id\s*=\s*\$1/i.test(cleanSql)) {
             const task = memoryDb.maintenance_tasks.find(t => t.id === params[0] && !t.deleted_at);
             return { rows: task ? [enrichTask(task)] : [] };
+        }
+
+        if (/WHERE\s+(?:t\.)?id\s*=\s*ANY\(\$1(?:::uuid\[\])?\)/i.test(cleanSql) || /WHERE\s+(?:t\.)?id\s+IN\s*\(\$1\)/i.test(cleanSql)) {
+            const idList = Array.isArray(params[0]) ? params[0] : [params[0]];
+            const idSet = new Set(idList);
+            const tasks = memoryDb.maintenance_tasks.filter(t => idSet.has(t.id) && !t.deleted_at).map(enrichTask);
+            return { rows: tasks };
+        }
+
+        if (/WHERE\s+t\.corridor_id\s*=\s*\$1\s+AND\s+t\.deleted_at\s+IS\s+NULL/i.test(cleanSql)) {
+            let results = memoryDb.maintenance_tasks.filter(t => !t.deleted_at && t.corridor_id === params[0]).map(enrichTask);
+            if (/AND\s+t\.status\s+IN/i.test(cleanSql)) {
+                results = results.filter(t => ['PENDING', 'SCHEDULED', 'DEFERRED', 'PLANNING', 'INCOMING'].includes(t.status));
+            }
+            return { rows: results };
         }
 
         let results = memoryDb.maintenance_tasks.filter(t => !t.deleted_at).map(enrichTask);
@@ -496,7 +546,16 @@ function handleMemoryQuery(sql, params) {
     }
 
     // 4. BLOCK WINDOWS
-    if (/(?:FROM|UPDATE)\s+block_windows/i.test(cleanSql)) {
+    if (/(?:FROM|UPDATE|DELETE)\s+(?:FROM\s+)?block_windows/i.test(cleanSql)) {
+        if (/DELETE\s+FROM\s+block_windows/i.test(cleanSql)) {
+            if (/corridor_id\s*=\s*\$1/i.test(cleanSql)) {
+                memoryDb.block_windows = memoryDb.block_windows.filter(w => w.corridor_id !== params[0] || (w.operational_constraints?.dataSourceType !== 'DEMO' && w.operational_constraints?.data_source_type !== 'DEMO'));
+            } else {
+                memoryDb.block_windows = memoryDb.block_windows.filter(w => w.operational_constraints?.dataSourceType !== 'DEMO' && w.operational_constraints?.data_source_type !== 'DEMO');
+            }
+            return { rows: [] };
+        }
+
         if (/UPDATE\s+block_windows/i.test(cleanSql)) {
             const windowId = params[1];
             const newStatus = params[0];
@@ -558,7 +617,16 @@ function handleMemoryQuery(sql, params) {
     }
 
     // 5. TRAIN MOVEMENTS
-    if (/(?:FROM|UPDATE)\s+train_movements/i.test(cleanSql)) {
+    if (/(?:FROM|UPDATE|DELETE)\s+(?:FROM\s+)?train_movements/i.test(cleanSql)) {
+        if (/DELETE\s+FROM\s+train_movements/i.test(cleanSql)) {
+            if (/corridor_id\s*=\s*\$1/i.test(cleanSql)) {
+                memoryDb.train_movements = memoryDb.train_movements.filter(m => m.corridor_id !== params[0] || (m.operational_details?.dataSourceType !== 'DEMO' && m.operational_details?.data_source_type !== 'DEMO'));
+            } else {
+                memoryDb.train_movements = memoryDb.train_movements.filter(m => m.operational_details?.dataSourceType !== 'DEMO' && m.operational_details?.data_source_type !== 'DEMO');
+            }
+            return { rows: [] };
+        }
+
         if (/UPDATE\s+train_movements/i.test(cleanSql)) {
             const trainId = params[1];
             const newStatus = params[0];
@@ -736,7 +804,10 @@ function handleMemoryQuery(sql, params) {
             existing.operational_constraints = operational_constraints;
             existing.synced_at = new Date();
             existing.updated_at = new Date();
-            return { rows: [{ id: existing.id, is_new: false }] };
+            if (/RETURNING\s+\*/i.test(cleanSql)) {
+                return { rows: [enrichTask(existing)] };
+            }
+            return { rows: [{ id: existing.id, is_new: false, status: existing.status, external_record_id: existing.external_record_id }] };
         }
         const newTask = {
             id: 't-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
@@ -748,7 +819,10 @@ function handleMemoryQuery(sql, params) {
             synced_at: new Date(), created_at: new Date(), updated_at: new Date()
         };
         memoryDb.maintenance_tasks.push(newTask);
-        return { rows: [{ id: newTask.id, is_new: true }] };
+        if (/RETURNING\s+\*/i.test(cleanSql)) {
+            return { rows: [enrichTask(newTask)] };
+        }
+        return { rows: [{ id: newTask.id, is_new: true, status: newTask.status, external_record_id: newTask.external_record_id }] };
     }
 
     if (/INSERT\s+INTO\s+block_windows/i.test(cleanSql) && /ON\s+CONFLICT/i.test(cleanSql)) {
@@ -1048,6 +1122,145 @@ function handleMemoryQuery(sql, params) {
         return { rows: results };
     }
 
+    // 14. DEFECTS
+    if (/(?:FROM|INSERT|DELETE|UPDATE)\s+(?:FROM\s+|INTO\s+)?defects/i.test(cleanSql)) {
+        if (/INSERT\s+INTO\s+defects/i.test(cleanSql)) {
+            const [external_record_id, defect_code, defect_type, severity, description, component, failure_risk, status, asset_id, corridor_id, department_id, source_system_id, metadata] = params;
+            const existing = memoryDb.defects.find(d => d.external_record_id === external_record_id);
+            if (existing) {
+                existing.severity = severity;
+                existing.description = description;
+                existing.component = component;
+                existing.failure_risk = failure_risk;
+                existing.status = status;
+                existing.metadata = typeof metadata === 'string' ? JSON.parse(metadata) : (metadata || {});
+                existing.updated_at = new Date();
+                return { rows: [{ id: existing.id, is_new: false }] };
+            }
+            const newDefect = {
+                id: 'def-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                external_record_id, defect_code, defect_type, severity, description,
+                component, failure_risk, status: status || 'REPORTED',
+                asset_id, corridor_id, department_id, source_system_id,
+                metadata: typeof metadata === 'string' ? JSON.parse(metadata) : (metadata || {}),
+                reported_at: new Date(), created_at: new Date(), updated_at: new Date()
+            };
+            memoryDb.defects.push(newDefect);
+            return { rows: [{ id: newDefect.id, is_new: true }] };
+        }
+
+        if (/DELETE\s+FROM\s+defects/i.test(cleanSql)) {
+            if (/corridor_id\s*=\s*\$1/i.test(cleanSql)) {
+                memoryDb.defects = memoryDb.defects.filter(d => d.corridor_id !== params[0]);
+            } else {
+                memoryDb.defects = [];
+            }
+            return { rows: [] };
+        }
+
+        let results = memoryDb.defects.map(enrichDefect);
+        if (params[0]) results = results.filter(d => d.corridor_id === params[0]);
+        if (params[1]) results = results.filter(d => (d.department_code || '').toLowerCase() === params[1].toLowerCase());
+        if (params[2]) results = results.filter(d => (d.severity || '').toLowerCase() === params[2].toLowerCase());
+        if (params[3]) results = results.filter(d => (d.status || '').toLowerCase() === params[3].toLowerCase());
+        return { rows: results };
+    }
+
+    // 15. MAINTENANCE DEPENDENCIES
+    if (/(?:FROM|INSERT|DELETE)\s+(?:FROM\s+|INTO\s+)?maintenance_dependencies/i.test(cleanSql)) {
+        if (/INSERT\s+INTO\s+maintenance_dependencies/i.test(cleanSql)) {
+            const [task_id, depends_on_task_id, dependency_type, lag_minutes] = params;
+            const existing = memoryDb.maintenance_dependencies.find(d => d.task_id === task_id && d.depends_on_task_id === depends_on_task_id);
+            if (existing) return { rows: [existing] };
+            const newDep = {
+                id: 'md-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                task_id, depends_on_task_id, dependency_type: dependency_type || 'FINISH_TO_START',
+                lag_minutes: lag_minutes || 0, created_at: new Date()
+            };
+            memoryDb.maintenance_dependencies.push(newDep);
+            return { rows: [newDep] };
+        }
+        if (/DELETE\s+FROM\s+maintenance_dependencies/i.test(cleanSql)) {
+            memoryDb.maintenance_dependencies = [];
+            return { rows: [] };
+        }
+        return { rows: [...memoryDb.maintenance_dependencies] };
+    }
+
+    // 16. PLANNING RUNS
+    if (/(?:FROM|UPDATE|INSERT)\s+(?:INTO\s+|FROM\s+)?planning_runs/i.test(cleanSql)) {
+        if (/INSERT\s+INTO\s+planning_runs/i.test(cleanSql)) {
+            const [run_id, corridor_id, horizon_start, horizon_end, input_request_ids, source_systems, status, exec_meta] = params;
+            const newRun = {
+                id: 'pr-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                planning_run_id: run_id,
+                corridor_id,
+                horizon_start: new Date(horizon_start),
+                horizon_end: new Date(horizon_end),
+                input_request_ids: typeof input_request_ids === 'string' ? JSON.parse(input_request_ids) : (input_request_ids || []),
+                source_systems: typeof source_systems === 'string' ? JSON.parse(source_systems) : (source_systems || []),
+                status: status || 'CREATED',
+                plan_id: null,
+                failure_reason: null,
+                execution_metadata: typeof exec_meta === 'string' ? JSON.parse(exec_meta) : (exec_meta || {}),
+                created_at: new Date(),
+                updated_at: new Date()
+            };
+            memoryDb.planning_runs.unshift(newRun);
+            return { rows: [enrichPlanningRun(newRun)] };
+        }
+
+        if (/UPDATE\s+planning_runs/i.test(cleanSql)) {
+            let run = null;
+            for (const p of params) {
+                if (typeof p === 'string') {
+                    run = memoryDb.planning_runs.find(r => r.planning_run_id === p || r.id === p);
+                    if (run) break;
+                }
+            }
+            if (run) {
+                const statusMatch = cleanSql.match(/status\s*=\s*['"]([A-Z_]+)['"]/i);
+                if (statusMatch) {
+                    run.status = statusMatch[1];
+                } else if (/status\s*=\s*\$1/i.test(cleanSql)) {
+                    run.status = params[0];
+                }
+
+                if (/failure_reason\s*=\s*\$1/i.test(cleanSql)) {
+                    run.failure_reason = params[0];
+                } else if (/failure_reason\s*=\s*\$2/i.test(cleanSql)) {
+                    run.failure_reason = params[1];
+                }
+
+                if (/plan_id\s*=\s*\$1/i.test(cleanSql)) {
+                    run.plan_id = params[0];
+                } else if (/plan_id\s*=\s*\$2/i.test(cleanSql)) {
+                    run.plan_id = params[1];
+                }
+
+                if (/execution_metadata\s*=\s*\$2/i.test(cleanSql)) {
+                    run.execution_metadata = typeof params[1] === 'string' ? JSON.parse(params[1]) : params[1];
+                } else if (/execution_metadata\s*=\s*\$3/i.test(cleanSql)) {
+                    run.execution_metadata = typeof params[2] === 'string' ? JSON.parse(params[2]) : params[2];
+                }
+                run.updated_at = new Date();
+                return { rows: [enrichPlanningRun(run)] };
+            }
+            return { rows: [] };
+        }
+
+        if (/FROM\s+planning_runs/i.test(cleanSql)) {
+            if (/WHERE\s+(?:r\.)?planning_run_id\s*=\s*\$1/i.test(cleanSql) || /WHERE\s+(?:r\.)?id\s*=\s*\$1/i.test(cleanSql)) {
+                const run = memoryDb.planning_runs.find(r => r.planning_run_id === params[0] || r.id === params[0]);
+                return { rows: run ? [enrichPlanningRun(run)] : [] };
+            }
+            let results = memoryDb.planning_runs.map(enrichPlanningRun);
+            if (params[0]) results = results.filter(r => r.corridor_id === params[0]);
+            if (params[1]) results = results.filter(r => r.status.toLowerCase() === params[1].toLowerCase());
+            return { rows: results };
+        }
+    }
+
     return { rows: [] };
 }
 
@@ -1138,6 +1351,32 @@ function enrichAuditLog(log) {
         ...log,
         username: user.username || 'SYSTEM',
         user_full_name: user.full_name || 'System / Automated'
+    };
+}
+
+function enrichDefect(defect) {
+    const corridor = memoryDb.corridors.find(c => c.id === defect.corridor_id) || {};
+    const asset = memoryDb.assets.find(a => a.id === defect.asset_id) || {};
+    const department = memoryDb.departments.find(d => d.id === defect.department_id) || {};
+    const source = memoryDb.integration_sources.find(s => s.id === defect.source_system_id) || {};
+    return {
+        ...defect,
+        corridor_code: corridor.code || 'UNKNOWN',
+        corridor_name: corridor.name || 'Unknown Corridor',
+        asset_code: asset.asset_code || 'UNKNOWN',
+        asset_name: asset.name || 'Unknown Asset',
+        department_code: department.code || 'UNKNOWN',
+        department_name: department.name || 'Unknown Department',
+        source_system: source.code || 'UNKNOWN'
+    };
+}
+
+function enrichPlanningRun(run) {
+    const corridor = memoryDb.corridors.find(c => c.id === run.corridor_id) || {};
+    return {
+        ...run,
+        corridor_code: corridor.code || 'UNKNOWN',
+        corridor_name: corridor.name || 'Unknown Corridor'
     };
 }
 

@@ -6,13 +6,16 @@
   "scripts": {
     "dev": "nodemon index.js",
     "start": "node index.js",
-    "test": "node test_auth.js && node test_core_apis.js && node test_sync_gateway.js && node test_ai_gateway.js && node test_planning_workflow.js && node test_production_audit.js",
+    "test": "node test_auth.js && node test_core_apis.js && node test_sync_gateway.js && node test_ai_gateway.js && node test_planning_workflow.js && node test_production_audit.js && node test_demo_gateway.js && node test_backend_integration.js && node test_ai_pipeline_live.js",
     "test:auth": "node test_auth.js",
     "test:core": "node test_core_apis.js",
     "test:sync": "node test_sync_gateway.js",
     "test:ai": "node test_ai_gateway.js",
     "test:planning": "node test_planning_workflow.js",
     "test:audit": "node test_production_audit.js",
+    "test:demo": "node test_demo_gateway.js",
+    "test:integration": "node test_backend_integration.js",
+    "test:live-ai": "node test_ai_pipeline_live.js",
     "db:migrate": "node src/database/migrate.js",
     "db:validate": "node src/database/validate_schema.js"
   },

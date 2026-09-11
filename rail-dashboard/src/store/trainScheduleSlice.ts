@@ -13,6 +13,11 @@ export interface Train {
   trainName?: string;
   priority?: number;
   corridorId?: string;
+  direction?: 'UP' | 'DOWN' | string;
+  train_number?: string;
+  train_type?: string;
+  scheduled_start_time?: string;
+  scheduled_end_time?: string;
 }
 
 interface TrainScheduleState {
@@ -29,18 +34,28 @@ const initialState: TrainScheduleState = {
 
 // Map API train_movement record to internal Train shape
 function mapApiTrain(t: any): Train {
+  const num = t.train_number ?? t.trainNumber ?? t.number ?? t.id;
+  const typ = t.train_type ?? t.trainType ?? t.type ?? 'EXPRESS';
+  const start = t.scheduled_start_time ?? t.scheduledEntryTime ?? t.scheduled_entry_time ?? t.entry_time ?? new Date().toISOString();
+  const end = t.scheduled_end_time ?? t.scheduledExitTime ?? t.scheduled_exit_time ?? t.exit_time ?? new Date().toISOString();
+  const dir = t.direction ?? (parseInt(String(num).replace(/\D/g, '') || '0', 10) % 2 === 0 ? 'UP' : 'DOWN');
+
   return {
     id: t.id,
-    number: t.train_number ?? t.trainNumber ?? t.id,
-    type: t.train_type ?? t.trainType ?? 'EXPRESS',
+    number: num,
+    train_number: num,
+    type: typ,
+    train_type: typ,
     trainName: t.service_identifier ?? t.trainName ?? t.train_name ?? '',
     priority: t.priority ?? 3,
     corridorId: t.corridor_id ?? t.corridorId ?? '',
-    // Map to section_id: use corridor_id as fallback section reference
     section_id: t.section_id ?? 'sec-a-b',
-    entry_time: t.scheduled_start_time ?? t.scheduledEntryTime ?? t.scheduled_entry_time ?? new Date().toISOString(),
-    exit_time: t.scheduled_end_time ?? t.scheduledExitTime ?? t.scheduled_exit_time ?? new Date().toISOString(),
+    entry_time: start,
+    exit_time: end,
+    scheduled_start_time: start,
+    scheduled_end_time: end,
     status: t.status ?? 'SCHEDULED',
+    direction: dir,
   };
 }
 

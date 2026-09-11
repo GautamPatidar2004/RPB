@@ -1,4 +1,5 @@
 const planningService = require('../services/planningService');
+const aiPlanningBridge = require('../services/aiPlanningBridge');
 
 class PlanningController {
     /**
@@ -185,6 +186,104 @@ class PlanningController {
             return res.status(500).json({
                 success: false,
                 error: 'Failed to retrieve plan audit logs'
+            });
+        }
+    }
+
+    /**
+     * POST /planning-runs or POST /api/plans/planning-runs
+     * Creates a planning run.
+     * - If execute_now !== false: runs full pipeline immediately.
+     * - If execute_now === false: creates run, locks tasks into PLANNING state, and returns run ID.
+     */
+    async createPlanningRun(req, res) {
+        try {
+            const executeNow = req.body.execute_now !== false && req.body.executeNow !== false;
+            let result;
+
+            if (executeNow) {
+                result = await aiPlanningBridge.executePlanningRun(req.body, req.user);
+                const statusCode = result.isDuplicate ? 200 : (result.success ? 201 : 422);
+                return res.status(statusCode).json(result);
+            } else {
+                result = await aiPlanningBridge.createPlanningRun(req.body, req.user);
+                const statusCode = result.isDuplicate ? 200 : 201;
+                return res.status(statusCode).json(result);
+            }
+        } catch (err) {
+            console.error('[PlanningController.createPlanningRun]:', err);
+            const status = err.statusCode || 400;
+            return res.status(status).json({
+                success: false,
+                error: err.message || 'Failed to create planning run'
+            });
+        }
+    }
+
+    /**
+     * POST /planning-runs/:id/generate or POST /api/plans/planning-runs/:id/generate
+     * Triggers AI generation for an existing planning run
+     */
+    async generatePlanForRun(req, res) {
+        try {
+            const runId = req.params.id || req.params.runId;
+            const result = await aiPlanningBridge.generatePlanForRun(runId, req.body, req.user);
+            const statusCode = result.success ? 200 : 422;
+            return res.status(statusCode).json(result);
+        } catch (err) {
+            console.error('[PlanningController.generatePlanForRun]:', err);
+            const status = err.statusCode || 400;
+            return res.status(status).json({
+                success: false,
+                error: err.message || 'Failed to generate plan for run'
+            });
+        }
+    }
+
+    /**
+     * GET /planning-runs or GET /api/plans/planning-runs
+     * List planning runs with optional corridor and status filters
+     */
+    async listPlanningRuns(req, res) {
+        try {
+            const runs = await aiPlanningBridge.listPlanningRuns(req.query);
+            return res.status(200).json({
+                success: true,
+                count: runs.length,
+                data: runs
+            });
+        } catch (err) {
+            console.error('[PlanningController.listPlanningRuns]:', err);
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to list planning runs'
+            });
+        }
+    }
+
+    /**
+     * GET /planning-runs/:id or GET /api/plans/planning-runs/:runId
+     * Retrieve details and plan results of a specific planning run
+     */
+    async getPlanningRun(req, res) {
+        try {
+            const runId = req.params.runId || req.params.id;
+            const run = await aiPlanningBridge.getPlanningRunById(runId);
+            if (!run) {
+                return res.status(404).json({
+                    success: false,
+                    error: `Planning run [${runId}] not found`
+                });
+            }
+            return res.status(200).json({
+                success: true,
+                data: run
+            });
+        } catch (err) {
+            console.error('[PlanningController.getPlanningRun]:', err);
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to retrieve planning run'
             });
         }
     }
