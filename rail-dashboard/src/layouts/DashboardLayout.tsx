@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Map, Calendar, Activity, Settings, LogOut,
   Bell, RefreshCw, Train, Wrench, Filter, ChevronRight,
@@ -30,6 +30,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const isSyncing    = useAppSelector(s => s.sync.isSyncing);
   const isGenerating = useAppSelector(s => s.plans.isGenerating);
   const taskSummary  = useAppSelector(s => s.maintenanceTasks.summary);
+  const assetSummary = useAppSelector(s => s.assets.summary);
 
   const selectedCorridor = corridors.find(c => c.id === selectedCId);
 
@@ -37,12 +38,23 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const delayedCount = trains.filter(t => t.status === 'DELAYED' || t.status === 'REGULATED').length;
   const pendingCount = taskSummary?.pending ?? blocks.filter(b => b.status === 'PENDING').length;
   const approvedCount = blocks.filter(b => b.status === 'APPROVED').length;
+  const criticalAssets = assetSummary?.critical ?? 0;
 
   const [activeNav, setActiveNav] = useState('overview');
   const [showCorridorMenu, setShowCorridorMenu] = useState(false);
-  const [currentTime] = useState(() =>
+  const [currentTime, setCurrentTime] = useState(() =>
     new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
   );
+
+  // Live ticking clock — updates every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(
+        new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+      );
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const lastSyncAt = syncSources.length > 0
     ? syncSources.reduce((latest, s) => s.lastSyncAt && s.lastSyncAt > (latest ?? '') ? s.lastSyncAt : latest, null as string | null)
@@ -220,6 +232,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             <div className="header-stat">
               <div className="stat-value pending">{pendingCount}</div>
               <div className="stat-label">Pending Tasks</div>
+            </div>
+            <div className="header-stat">
+              <div className="stat-value" style={{ color: criticalAssets > 0 ? '#dc2626' : 'var(--accent-emerald)' }}>{criticalAssets}</div>
+              <div className="stat-label">Critical Assets</div>
             </div>
             <div className="header-stat" style={{ borderRight: 'none', paddingRight: 0 }}>
               <div className="stat-value" style={{ color: 'var(--accent-blue)', fontFamily: "'JetBrains Mono', monospace" }}>{currentTime}</div>

@@ -27,6 +27,8 @@ export interface MaintenanceTaskSummary {
   completed: number;
   deferred: number;
   critical: number;
+  power_block_tasks?: number;
+  traffic_block_tasks?: number;
 }
 
 interface MaintenanceTaskState {
@@ -100,7 +102,21 @@ const maintenanceTaskSlice = createSlice({
       });
 
     builder.addCase(fetchMaintenanceTaskSummary.fulfilled, (state, action: PayloadAction<any>) => {
-      state.summary = action.payload?.data ?? null;
+      const raw = action.payload?.summary ?? action.payload?.data ?? null;
+      if (raw) {
+        // Normalize backend field names (pending_count) to frontend interface (pending)
+        state.summary = {
+          total: raw.total_tasks ?? raw.total ?? 0,
+          pending: raw.pending_count ?? raw.pending ?? 0,
+          scheduled: raw.scheduled_count ?? raw.scheduled ?? 0,
+          in_progress: raw.in_progress_count ?? raw.in_progress ?? 0,
+          completed: raw.completed_count ?? raw.completed ?? 0,
+          deferred: raw.deferred_count ?? raw.deferred ?? 0,
+          critical: raw.priority_1_urgent_count ?? raw.critical ?? 0,
+          power_block_tasks: raw.power_block_tasks ?? 0,
+          traffic_block_tasks: raw.traffic_block_tasks ?? 0,
+        };
+      }
     });
   },
 });

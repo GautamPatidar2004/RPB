@@ -6,6 +6,8 @@ import authReducer from './authSlice';
 import corridorReducer from './corridorSlice';
 import syncReducer from './syncSlice';
 import planReducer from './planSlice';
+import blockWindowReducer from './blockWindowSlice';
+import assetReducer from './assetSlice';
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +18,8 @@ export const store = configureStore({
     corridors:        corridorReducer,
     sync:             syncReducer,
     plans:            planReducer,
+    blockWindows:     blockWindowReducer,       // block windows from /api/block-windows
+    assets:           assetReducer,             // infrastructure assets from /api/assets
   },
 });
 

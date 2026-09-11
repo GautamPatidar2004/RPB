@@ -22,12 +22,7 @@ interface TrainScheduleState {
 }
 
 const initialState: TrainScheduleState = {
-  // Seed data shown until API responds
-  trains: [
-    { id: 'trn-1', number: '12951', type: 'Rajdhani', section_id: 'sec-a-b', entry_time: '2024-01-01T00:00:00', exit_time: '2024-01-01T01:30:00', status: 'ON_TIME' },
-    { id: 'trn-2', number: '16317', type: 'Express',  section_id: 'sec-c-d', entry_time: '2024-01-01T04:00:00', exit_time: '2024-01-01T06:00:00', status: 'DELAYED' },
-    { id: 'trn-3', number: '22691', type: 'Mail',     section_id: 'sec-d-e', entry_time: '2024-01-01T12:00:00', exit_time: '2024-01-01T14:00:00', status: 'ON_TIME' },
-  ],
+  trains: [],
   isLoading: false,
   error: null,
 };
@@ -36,18 +31,19 @@ const initialState: TrainScheduleState = {
 function mapApiTrain(t: any): Train {
   return {
     id: t.id,
-    number: t.trainNumber ?? t.train_number ?? t.id,
-    type: t.trainType ?? t.train_type ?? 'EXPRESS',
-    trainName: t.trainName ?? t.train_name ?? '',
+    number: t.train_number ?? t.trainNumber ?? t.id,
+    type: t.train_type ?? t.trainType ?? 'EXPRESS',
+    trainName: t.service_identifier ?? t.trainName ?? t.train_name ?? '',
     priority: t.priority ?? 3,
-    corridorId: t.corridorId ?? t.corridor_id ?? '',
-    // Map to section_id using corridorId so LinearTrackView can render
+    corridorId: t.corridor_id ?? t.corridorId ?? '',
+    // Map to section_id: use corridor_id as fallback section reference
     section_id: t.section_id ?? 'sec-a-b',
-    entry_time: t.scheduledEntryTime ?? t.scheduled_entry_time ?? t.entryTime ?? new Date().toISOString(),
-    exit_time: t.scheduledExitTime  ?? t.scheduled_exit_time  ?? t.exitTime  ?? new Date().toISOString(),
+    entry_time: t.scheduled_start_time ?? t.scheduledEntryTime ?? t.scheduled_entry_time ?? new Date().toISOString(),
+    exit_time: t.scheduled_end_time ?? t.scheduledExitTime ?? t.scheduled_exit_time ?? new Date().toISOString(),
     status: t.status ?? 'SCHEDULED',
   };
 }
+
 
 export const fetchTrainMovements = createAsyncThunk(
   'trainSchedule/fetchMovements',
@@ -79,15 +75,11 @@ export const trainScheduleSlice = createSlice({
       .addCase(fetchTrainMovements.fulfilled, (state, action: PayloadAction<any>) => {
         state.isLoading = false;
         const raw = action.payload?.data ?? action.payload?.trainMovements ?? action.payload?.movements ?? [];
-        if (raw.length > 0) {
-          state.trains = raw.map(mapApiTrain);
-        }
-        // If API returns empty, keep seed data
+        state.trains = raw.map(mapApiTrain);
       })
       .addCase(fetchTrainMovements.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
-        // Keep seed data on error
       });
   },
 });

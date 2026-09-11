@@ -6,6 +6,8 @@ import { fetchTrainMovements } from './store/trainScheduleSlice';
 import { fetchMaintenanceTasks, fetchMaintenanceTaskSummary } from './store/maintenanceTaskSlice';
 import { fetchSyncStatus } from './store/syncSlice';
 import { fetchPlans } from './store/planSlice';
+import { fetchBlockWindows } from './store/blockWindowSlice';
+import { fetchAssets, fetchAssetSummary } from './store/assetSlice';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardLayout } from './layouts/DashboardLayout';
 
@@ -31,6 +33,7 @@ function App() {
     dispatch(fetchCorridorSummary());
     dispatch(fetchSyncStatus());
     dispatch(fetchMaintenanceTaskSummary());
+    dispatch(fetchAssetSummary());
   }, [isAuthenticated, dispatch]);
 
   // When corridor is selected, fetch corridor-scoped data
@@ -39,6 +42,21 @@ function App() {
     dispatch(fetchTrainMovements({ corridor_id: selectedCorridorId }));
     dispatch(fetchMaintenanceTasks({ corridorId: selectedCorridorId }));
     dispatch(fetchPlans({ corridor_code: selectedCorridor?.code }));
+    dispatch(fetchBlockWindows({ corridor_id: selectedCorridorId }));
+    dispatch(fetchAssets({ corridor_id: selectedCorridorId }));
+  }, [isAuthenticated, selectedCorridorId, dispatch]);
+
+  // Auto-refresh live data every 60 seconds
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const interval = setInterval(() => {
+      dispatch(fetchSyncStatus());
+      if (selectedCorridorId) {
+        dispatch(fetchTrainMovements({ corridor_id: selectedCorridorId }));
+        dispatch(fetchMaintenanceTasks({ corridorId: selectedCorridorId }));
+      }
+    }, 60000);
+    return () => clearInterval(interval);
   }, [isAuthenticated, selectedCorridorId, dispatch]);
 
   if (!isAuthenticated) {

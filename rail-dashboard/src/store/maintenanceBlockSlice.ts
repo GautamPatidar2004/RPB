@@ -14,33 +14,10 @@ interface MaintenanceBlockState {
 }
 
 const initialState: MaintenanceBlockState = {
-  blocks: [
-    {
-      id: 'blk-1',
-      section_id: 'sec-a-b',
-      department: 'Engineering',
-      start_time: '2024-01-01T02:00:00',
-      end_time: '2024-01-01T05:00:00',
-      status: 'APPROVED',
-    },
-    {
-      id: 'blk-2',
-      section_id: 'sec-c-d',
-      department: 'OHE',
-      start_time: '2024-01-01T06:00:00',
-      end_time: '2024-01-01T10:00:00',
-      status: 'PENDING',
-    },
-    {
-      id: 'blk-3',
-      section_id: 'sec-b-c',
-      department: 'Signal',
-      start_time: '2024-01-01T14:00:00',
-      end_time: '2024-01-01T17:00:00',
-      status: 'PENDING',
-    },
-  ],
+  // Populated via setOptimizedBlocks from planSlice when a plan is loaded
+  blocks: [],
 };
+
 
 export const maintenanceBlockSlice = createSlice({
   name: 'maintenanceBlock',

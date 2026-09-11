@@ -104,7 +104,7 @@ const corridorSlice = createSlice({
 
     builder
       .addCase(fetchCorridorSummary.fulfilled, (state, action: PayloadAction<any>) => {
-        state.summary = action.payload?.data ?? null;
+        state.summary = action.payload?.summary ?? action.payload?.data ?? null;
       });
   },
 });

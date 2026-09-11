@@ -60,7 +60,7 @@ const syncSlice = createSlice({
       .addCase(fetchSyncStatus.pending, (state) => { state.isLoading = true; state.error = null; })
       .addCase(fetchSyncStatus.fulfilled, (state, action: PayloadAction<any>) => {
         state.isLoading = false;
-        state.sources = action.payload?.data ?? action.payload?.sources ?? [];
+        state.sources = action.payload?.sources ?? action.payload?.data ?? [];
         state.lastFetchedAt = new Date().toISOString();
       })
       .addCase(fetchSyncStatus.rejected, (state, action) => {
