@@ -22,8 +22,14 @@ class Settings(BaseSettings):
     )
 
     # Server Settings
-    ai_service_host: str = Field(default="0.0.0.0", description="Host address to bind the AI service")
-    ai_service_port: int = Field(default=8000, description="Port for the AI service")
+    ai_service_host: str = Field(
+        default_factory=lambda: os.environ.get("HOST", "0.0.0.0"),
+        description="Host address to bind the AI service"
+    )
+    ai_service_port: int = Field(
+        default_factory=lambda: int(os.environ.get("PORT", os.environ.get("AI_SERVICE_PORT", "8000"))),
+        description="Port for the AI service"
+    )
     environment: str = Field(default="development", description="Service runtime environment")
     log_level: str = Field(default="INFO", description="Logging level")
 

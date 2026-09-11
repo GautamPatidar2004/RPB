@@ -178,7 +178,15 @@ class AIPlanningBridge {
                             reject(new Error(`AI Service returned invalid JSON: ${err.message}`));
                         }
                     } else {
-                        const error = new Error(`AI Service returned HTTP ${res.statusCode}: ${responseBody}`);
+                        let cleanMessage = responseBody.trim();
+                        if (res.statusCode === 502 || responseBody.includes('<title>502</title>')) {
+                            cleanMessage = 'AI Service unavailable (502 Bad Gateway). Service may be booting up or offline.';
+                        } else if (cleanMessage.startsWith('<!DOCTYPE') || cleanMessage.startsWith('<html')) {
+                            cleanMessage = `HTML Error Page (${cleanMessage.slice(0, 100)}...)`;
+                        } else if (cleanMessage.length > 200) {
+                            cleanMessage = cleanMessage.slice(0, 200) + '...';
+                        }
+                        const error = new Error(`AI Service returned HTTP ${res.statusCode}: ${cleanMessage}`);
                         error.statusCode = res.statusCode;
                         reject(error);
                     }

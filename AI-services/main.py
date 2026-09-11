@@ -106,10 +106,14 @@ def create_app() -> FastAPI:
 app = create_app()
 
 if __name__ == "__main__":
+    import os
     import uvicorn
+    host = os.environ.get("HOST", settings.ai_service_host) or "0.0.0.0"
+    port = int(os.environ.get("PORT", settings.ai_service_port))
+    logger.info("Starting AI Service on %s:%s (env=%s)", host, port, settings.environment)
     uvicorn.run(
         "main:app",
-        host=settings.ai_service_host,
-        port=settings.ai_service_port,
+        host=host,
+        port=port,
         reload=(settings.environment == "development")
     )
