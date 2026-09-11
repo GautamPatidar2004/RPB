@@ -69,11 +69,11 @@ export const LinearRailwaySchematic: React.FC<LinearRailwaySchematicProps> = ({
   });
 
   return (
-    <div className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 relative shadow-inner overflow-hidden select-none">
+    <div className="w-full bg-white border border-slate-200 rounded-lg p-4 relative shadow-sm overflow-hidden select-none">
       {/* HEADER CONTROLS & LEGEND */}
       <div className="flex items-center justify-between mb-2 text-xs">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
             Linear Track Schematic Topology
           </span>
@@ -83,7 +83,7 @@ export const LinearRailwaySchematic: React.FC<LinearRailwaySchematicProps> = ({
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-3 text-[11px] font-medium text-slate-400">
+        <div className="flex items-center gap-3 text-[11px] font-medium text-slate-500">
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-2 rounded-sm bg-rose-600 inline-block" />
             <span>Possession Block</span>
@@ -361,8 +361,8 @@ export const LinearRailwaySchematic: React.FC<LinearRailwaySchematicProps> = ({
               <circle cx={stn.x} cy="110" r="5" fill="#f8fafc" stroke="#0284c7" strokeWidth="2.5" />
 
               {/* Station Name Badge */}
-              <rect x={stn.x - 45} y="15" width="90" height="18" rx="3" fill="#0f172a" stroke="#334155" strokeWidth="1" />
-              <text x={stn.x} y="27" fill="#f1f5f9" fontSize="9" fontWeight="bold" textAnchor="middle">
+              <rect x={stn.x - 45} y="15" width="90" height="18" rx="3" fill="#ffffff" stroke="#cbd5e1" strokeWidth="1" />
+              <text x={stn.x} y="27" fill="#334155" fontSize="9" fontWeight="bold" textAnchor="middle">
                 {stn.name}
               </text>
 
@@ -378,7 +378,7 @@ export const LinearRailwaySchematic: React.FC<LinearRailwaySchematicProps> = ({
       {/* FLOATING INSPECTION TOOLTIP */}
       {hoveredEntity && (
         <div
-          className="fixed pointer-events-none z-50 px-3 py-2 rounded bg-slate-900/95 border border-slate-700 shadow-2xl text-slate-100 text-xs backdrop-blur max-w-xs transition-opacity"
+          className="fixed pointer-events-none z-50 px-3 py-2 rounded bg-slate-50/95 border border-slate-300 shadow-2xl text-slate-900 text-xs backdrop-blur max-w-xs transition-opacity"
           style={{ left: Math.min(window.innerWidth - 240, hoveredEntity.x - 80), top: hoveredEntity.y - 65 }}
         >
           <div className="font-bold text-sky-400 flex items-center gap-1.5">
@@ -387,9 +387,9 @@ export const LinearRailwaySchematic: React.FC<LinearRailwaySchematicProps> = ({
             {hoveredEntity.type === 'STATION' && <MapPin size={12} />}
             {hoveredEntity.title}
           </div>
-          <div className="text-[11px] text-slate-300 mt-0.5">{hoveredEntity.details}</div>
+          <div className="text-[11px] text-slate-700 mt-0.5">{hoveredEntity.details}</div>
           {hoveredEntity.metrics && (
-            <div className="text-[10px] text-emerald-400 font-mono mt-1 pt-1 border-t border-slate-800">
+            <div className="text-[10px] text-emerald-400 font-mono mt-1 pt-1 border-t border-slate-200">
               {hoveredEntity.metrics}
             </div>
           )}

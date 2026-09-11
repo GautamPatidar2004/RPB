@@ -28,9 +28,9 @@ export const SectionControllerDashboard: React.FC = () => {
   }, [dispatch]);
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#050914] text-slate-100 overflow-hidden font-sans">
+    <div className="flex flex-col h-full w-full bg-slate-50 text-slate-900 overflow-hidden font-sans">
       {/* 1. TOP: Global Telemetry & Status Bar */}
-      <div className="flex-none p-3 pb-2">
+      <div className="flex-none bg-white border-b border-slate-200 shadow-sm px-4 py-3 z-10 relative">
         <GlobalTelemetryBar 
           activeDirection={activeDirection}
           onDirectionChange={setActiveDirection}
@@ -38,7 +38,7 @@ export const SectionControllerDashboard: React.FC = () => {
       </div>
 
       {/* Main Operational Scrollable / Structured View */}
-      <div className="flex-1 flex flex-col min-h-0 px-3 pb-3 space-y-3 overflow-y-auto custom-scrollbar">
+      <div className="flex-1 flex flex-col min-h-0 px-4 pt-4 pb-6 space-y-5 overflow-y-auto custom-scrollbar bg-slate-50/50">
         
         {/* 2. UPPER: Linear Railway Schematic (Dual-Track, Station Nodes, Trains, Possessions) */}
         <div className="flex-none h-[180px] w-full min-w-[900px]">
@@ -59,7 +59,7 @@ export const SectionControllerDashboard: React.FC = () => {
         </div>
 
         {/* 4. LOWER: Tri-Column Dense Operational Command Dock */}
-        <div className="flex-1 min-h-[360px] grid grid-cols-1 xl:grid-cols-12 gap-3 pb-1">
+        <div className="flex-1 min-h-[360px] grid grid-cols-1 xl:grid-cols-12 gap-5 pb-2">
           {/* Left Column: Department Request Queue */}
           <div className="xl:col-span-4 h-full min-h-[340px]">
             <DepartmentRequestQueue 

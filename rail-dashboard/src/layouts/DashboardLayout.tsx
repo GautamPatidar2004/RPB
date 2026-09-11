@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Map, Calendar, Activity, Settings, LogOut,
   Bell, RefreshCw, Train, Wrench, Filter, ChevronRight,
-  ChevronDown, Loader, DatabaseZap, Radio
+  ChevronDown, Loader, DatabaseZap, Radio, Menu, X
 } from 'lucide-react';
 import { LinearTrackView } from '../components/LinearTrackView';
 import { BlockGanttChart } from '../components/BlockGanttChart';
@@ -45,7 +45,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const approvedCount = blocks.filter(b => b.status === 'APPROVED').length;
   const criticalAssets = assetSummary?.critical ?? 0;
 
-  const [activeNav, setActiveNav] = useState('controller');
+  const [activeNav, setActiveNav] = useState('overview');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [showCorridorMenu, setShowCorridorMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
@@ -107,10 +108,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   };
 
   const navItems = [
-    { id: 'controller', icon: <Radio size={16} />,        label: 'Section Controller' },
     { id: 'overview',   icon: <LayoutDashboard size={16} />, label: 'Overview' },
-    { id: 'track',      icon: <Map size={16} />,             label: 'Track Schematics' },
-    { id: 'gantt',      icon: <Calendar size={16} />,        label: 'Block Planning' },
+    { id: 'controller', icon: <Radio size={16} />,        label: 'Section Controller' },
     { id: 'live',       icon: <Activity size={16} />,        label: 'Live Operations' },
   ];
 
@@ -119,17 +118,33 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
   return (
     <div className="app-shell">
+      {/* Floating Toggle Button (Visible when sidebar is closed) */}
+      {!isSidebarOpen && (
+        <button 
+          onClick={() => setIsSidebarOpen(true)}
+          style={{ position: 'absolute', top: 12, left: 12, zIndex: 100, background: 'var(--bg-surface)', border: '1px solid var(--border-default)', borderRadius: 8, padding: 8, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          title="Open Sidebar"
+        >
+          <Menu size={20} color="var(--text-primary)" />
+        </button>
+      )}
+
       {/* ── Sidebar ─────────────────────────────────────────── */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${isSidebarOpen ? '' : 'closed'}`}>
         {/* Logo */}
-        <div className="sidebar-logo">
-          <div className="logo-icon">
-            <Train size={16} color="white" />
+        <div className="sidebar-logo" style={{ justifyContent: 'space-between', paddingRight: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div className="logo-icon">
+              <Train size={16} color="white" />
+            </div>
+            <div className="logo-text">
+              IR Block Planner
+              <span>Ministry of Railways</span>
+            </div>
           </div>
-          <div className="logo-text">
-            IR Block Planner
-            <span>Ministry of Railways</span>
-          </div>
+          <button onClick={() => setIsSidebarOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4, borderRadius: 4 }} title="Close Sidebar">
+            <X size={16} />
+          </button>
         </div>
 
         {/* Corridor badge / selector */}
@@ -323,7 +338,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         {/* Dashboard Grid */}
         <main 
           className="dashboard-content"
-          style={activeNav === 'controller' ? { display: 'flex', padding: 0, overflow: 'hidden', height: '100%', background: '#050914' } : {}}
+          style={activeNav === 'controller' ? { display: 'flex', padding: 0, overflow: 'hidden', height: '100%', background: '#f8fafc' } : {}}
         >
           {children ? children : (
             <>
@@ -334,9 +349,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 </div>
               )}
 
-              {/* ── Overview or Track View ─────────── */}
-              {(activeNav === 'overview' || activeNav === 'track') && (
-                <div className="panel" style={activeNav === 'track' ? { flex: 1 } : {}}>
+              {/* ── Overview ─────────── */}
+              {activeNav === 'overview' && (
+                <div className="panel">
                   <div className="panel-header">
                     <div className="panel-title">
                       <span className="panel-icon"><Map size={14} /></span>
@@ -359,9 +374,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 </div>
               )}
 
-              {/* ── Overview or Block Planning ───────────── */}
-              {(activeNav === 'overview' || activeNav === 'gantt') && (
-                <div className="panel" style={activeNav === 'gantt' ? { flex: 1 } : {}}>
+              {/* ── Overview ───────────── */}
+              {activeNav === 'overview' && (
+                <div className="panel">
                   <div className="panel-header">
                     <div className="panel-title">
                       <span className="panel-icon"><Calendar size={14} /></span>

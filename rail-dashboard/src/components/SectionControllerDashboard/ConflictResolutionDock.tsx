@@ -36,21 +36,21 @@ export const ConflictResolutionDock: React.FC<ConflictResolutionDockProps> = () 
   };
 
   return (
-    <div className="bg-[#0b1329] border border-slate-800 rounded-lg p-3 flex flex-col h-full shadow-lg">
+    <div className="bg-white border border-slate-200 rounded-lg p-4 flex flex-col h-full shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800">
+      <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
         <div className="flex items-center space-x-2">
           <AlertTriangle className={`w-4 h-4 ${planConflicts.length > 0 ? 'text-amber-400' : 'text-slate-500'}`} />
-          <h3 className="text-xs font-mono font-bold tracking-wider text-slate-200 uppercase">
+          <h3 className="text-xs font-mono font-bold tracking-wider text-slate-800 uppercase">
             Conflict Resolution Dock
           </h3>
           <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-semibold ${
-            planConflicts.length > 0 ? 'bg-amber-950/80 text-amber-300 border border-amber-800' : 'bg-slate-800 text-slate-400'
+            planConflicts.length > 0 ? 'bg-amber-950/80 text-amber-300 border border-amber-800' : 'bg-slate-100 text-slate-500'
           }`}>
             {planConflicts.length} Active
           </span>
         </div>
-        <div className="flex items-center space-x-2 text-[10px] font-mono text-slate-400">
+        <div className="flex items-center space-x-2 text-[10px] font-mono text-slate-500">
           <span className="flex items-center space-x-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
             <span className="text-emerald-400">AI DETECTOR LIVE</span>
@@ -63,7 +63,7 @@ export const ConflictResolutionDock: React.FC<ConflictResolutionDockProps> = () 
         {planConflicts.length === 0 && warnings.length === 0 ? (
           <div className="h-full min-h-[160px] flex flex-col items-center justify-center text-center p-4 text-slate-500">
             <CheckCircle2 className="w-8 h-8 text-emerald-500/60 mb-2" />
-            <span className="text-xs font-mono font-medium text-slate-400">No Operational Conflicts Detected</span>
+            <span className="text-xs font-mono font-medium text-slate-500">No Operational Conflicts Detected</span>
             <p className="text-[11px] text-slate-600 mt-1 max-w-[280px]">
               AI planning engine verified all maintenance envelopes are cleared from train headway corridors.
             </p>
@@ -73,7 +73,7 @@ export const ConflictResolutionDock: React.FC<ConflictResolutionDockProps> = () 
             {planConflicts.map((conflict, idx) => (
               <div 
                 key={conflict.id || idx}
-                className="bg-slate-900/90 border border-amber-500/30 hover:border-amber-500/60 rounded-md p-2.5 transition-all text-xs"
+                className="bg-slate-50/90 border border-amber-500/30 hover:border-amber-500/60 rounded-md p-2.5 transition-all text-xs"
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center space-x-1.5">
@@ -91,19 +91,19 @@ export const ConflictResolutionDock: React.FC<ConflictResolutionDockProps> = () 
                   </span>
                 </div>
 
-                <p className="text-[11px] text-slate-300 mb-2 leading-relaxed">
+                <p className="text-[11px] text-slate-700 mb-2 leading-relaxed">
                   {conflict.description || `Train schedule overlaps with scheduled possession block window.`}
                 </p>
 
                 {/* Conflict Details */}
-                <div className="grid grid-cols-2 gap-1.5 bg-slate-950/60 p-1.5 rounded text-[10px] font-mono text-slate-400 mb-2">
+                <div className="grid grid-cols-2 gap-1.5 bg-white/60 p-1.5 rounded text-[10px] font-mono text-slate-500 mb-2">
                   <div>
                     <span className="text-slate-500">AFFECTED TRAIN:</span>{' '}
-                    <span className="text-slate-200 font-bold">{conflict.trainId || conflict.train_id || '12002 EXP'}</span>
+                    <span className="text-slate-800 font-bold">{conflict.trainId || conflict.train_id || '12002 EXP'}</span>
                   </div>
                   <div>
                     <span className="text-slate-500">CORRIDOR:</span>{' '}
-                    <span className="text-slate-200">{conflict.section || 'UP MAIN (KM 42-45)'}</span>
+                    <span className="text-slate-800">{conflict.section || 'UP MAIN (KM 42-45)'}</span>
                   </div>
                   <div>
                     <span className="text-slate-500">HEADWAY RISK:</span>{' '}
@@ -135,7 +135,7 @@ export const ConflictResolutionDock: React.FC<ConflictResolutionDockProps> = () 
                     <GitPullRequest className="w-3 h-3" />
                     <span>Apply AI Adjustment</span>
                   </button>
-                  <button className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 transition-colors">
+                  <button className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-[10px] font-mono text-slate-700 transition-colors">
                     Override
                   </button>
                 </div>
@@ -146,13 +146,13 @@ export const ConflictResolutionDock: React.FC<ConflictResolutionDockProps> = () 
             {warnings.map((warn, wIdx) => (
               <div 
                 key={`warn-${wIdx}`}
-                className="bg-slate-900/60 border border-slate-800 rounded p-2 text-[11px]"
+                className="bg-slate-50/60 border border-slate-200 rounded p-2 text-[11px]"
               >
                 <div className="flex items-center space-x-1.5 text-amber-400 text-[10px] font-mono font-bold mb-1">
                   <AlertTriangle className="w-3 h-3 text-amber-400" />
                   <span>PLAN ADVISORY</span>
                 </div>
-                <p className="text-slate-400 text-[10px] leading-relaxed">
+                <p className="text-slate-500 text-[10px] leading-relaxed">
                   {warn}
                 </p>
               </div>
@@ -162,9 +162,9 @@ export const ConflictResolutionDock: React.FC<ConflictResolutionDockProps> = () 
       </div>
 
       {/* Footer System Status */}
-      <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] font-mono text-slate-500">
+      <div className="mt-2 pt-2 border-t border-slate-200/80 flex items-center justify-between text-[10px] font-mono text-slate-500">
         <div className="flex items-center space-x-1">
-          <Clock className="w-3 h-3 text-slate-400" />
+          <Clock className="w-3 h-3 text-slate-500" />
           <span>REAL-TIME ARBITRATION ACTIVE</span>
         </div>
         <span>OR-TOOLS CONSTRAINTS v2</span>

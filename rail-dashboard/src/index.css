@@ -1,6 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
+@theme {
+  --color-scheme: light;
+}
+
 /* ─── Light Theme Design Tokens ─────────────────────────────── */
 :root {
   /* Backgrounds */
@@ -48,11 +52,12 @@
 
 html, body, #root {
   height: 100%;
-  background: var(--bg-base);
-  color: var(--text-primary);
+  background: var(--bg-base) !important;
+  color: var(--text-primary) !important;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color-scheme: light !important;
 }
 
 /* ─── Scrollbar ─────────────────────────────────────────────── */
@@ -80,6 +85,11 @@ html, body, #root {
   border-right: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-sm);
   z-index: 20;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar.closed {
+  margin-left: calc(-1 * var(--sidebar-w));
 }
 
 .sidebar-logo {
