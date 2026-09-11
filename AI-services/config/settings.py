@@ -1,7 +1,8 @@
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import List
-from pydantic import Field
+from pydantic import Field, AliasChoices
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Base directory for AI Service to reliably locate .env file
@@ -23,11 +24,13 @@ class Settings(BaseSettings):
 
     # Server Settings
     ai_service_host: str = Field(
-        default_factory=lambda: os.environ.get("HOST", "0.0.0.0"),
+        default="0.0.0.0",
+        validation_alias=AliasChoices("HOST", "AI_SERVICE_HOST"),
         description="Host address to bind the AI service"
     )
     ai_service_port: int = Field(
-        default_factory=lambda: int(os.environ.get("PORT", os.environ.get("AI_SERVICE_PORT", "8000"))),
+        default=8000,
+        validation_alias=AliasChoices("PORT", "AI_SERVICE_PORT"),
         description="Port for the AI service"
     )
     environment: str = Field(default="development", description="Service runtime environment")
