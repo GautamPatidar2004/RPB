@@ -15,6 +15,7 @@
  */
 
 const http = require('http');
+const https = require('https');
 const db = require('../config/db');
 const aiGatewayService = require('./aiGatewayService');
 
@@ -155,9 +156,10 @@ class AIPlanningBridge {
     async _singleHttpCall(payload) {
         const url = new URL('/api/v1/planning/generate', this.aiServiceUrl);
         const data = JSON.stringify(payload);
+        const client = url.protocol === 'https:' ? https : http;
 
         return new Promise((resolve, reject) => {
-            const req = http.request(url, {
+            const req = client.request(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
