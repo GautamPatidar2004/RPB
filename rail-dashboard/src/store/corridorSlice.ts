@@ -14,11 +14,11 @@ const corridorSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder.addCase(fetchCorridors.pending, (state) => { state.isLoading = true; })
-           .addCase(fetchCorridors.fulfilled, (state, action) => {
-               state.isLoading = false;
-               state.corridors = action.payload.data || [];
-               if (state.corridors.length > 0) state.selectedCorridorId = state.corridors[0].id;
-           });
+      .addCase(fetchCorridors.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.corridors = action.payload.data || [];
+        if (state.corridors.length > 0) state.selectedCorridorId = state.corridors[0].id;
+      });
   }
 });
 

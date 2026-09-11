@@ -8,7 +8,7 @@ import { fetchCorridors } from './store/corridorSlice';
 const App: React.FC = () => {
   const dispatch = useAppDispatch();
   const [activeTab, setActiveTab] = useState<'hub' | 'plan'>('hub');
-  
+
   useEffect(() => {
     dispatch(fetchCorridors());
   }, [dispatch]);
