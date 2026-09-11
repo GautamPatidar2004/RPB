@@ -260,51 +260,66 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         <main className="dashboard-content">
           {children ? children : (
             <>
-              {/* ── Top Panel: Linear Track Schematic ─────────── */}
-              <div className="panel">
-                <div className="panel-header">
-                  <div className="panel-title">
-                    <span className="panel-icon"><Map size={14} /></span>
-                    Linear Track Schematic
-                    {selectedCorridor && <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 400, textTransform: 'none', letterSpacing: 'normal' }}>({selectedCorridor.code})</span>}
-                  </div>
-                  <div className="panel-actions">
-                    <div className="legend">
-                      <div className="legend-item"><div className="legend-dot" style={{ background: '#ef4444' }} /> Maintenance</div>
-                      <div className="legend-item"><div className="legend-dot" style={{ background: '#10b981' }} /> On Time</div>
-                      <div className="legend-item"><div className="legend-dot" style={{ background: '#f59e0b' }} /> Delayed</div>
+              {/* ── Overview or Track View ─────────── */}
+              {(activeNav === 'overview' || activeNav === 'track') && (
+                <div className="panel" style={activeNav === 'track' ? { flex: 1 } : {}}>
+                  <div className="panel-header">
+                    <div className="panel-title">
+                      <span className="panel-icon"><Map size={14} /></span>
+                      Linear Track Schematic
+                      {selectedCorridor && <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 400, textTransform: 'none', letterSpacing: 'normal' }}>({selectedCorridor.code})</span>}
                     </div>
-                    <span className="panel-badge approved">{approvedCount} Active</span>
-                    <span className="panel-badge pending">{pendingCount} Tasks</span>
+                    <div className="panel-actions">
+                      <div className="legend">
+                        <div className="legend-item"><div className="legend-dot" style={{ background: '#ef4444' }} /> Maintenance</div>
+                        <div className="legend-item"><div className="legend-dot" style={{ background: '#10b981' }} /> On Time</div>
+                        <div className="legend-item"><div className="legend-dot" style={{ background: '#f59e0b' }} /> Delayed</div>
+                      </div>
+                      <span className="panel-badge approved">{approvedCount} Active</span>
+                      <span className="panel-badge pending">{pendingCount} Tasks</span>
+                    </div>
+                  </div>
+                  <div className="panel-body">
+                    <LinearTrackView />
                   </div>
                 </div>
-                <div className="panel-body">
-                  <LinearTrackView />
-                </div>
-              </div>
+              )}
 
-              {/* ── Bottom Panel: Block Gantt Chart ───────────── */}
-              <div className="panel">
-                <div className="panel-header">
-                  <div className="panel-title">
-                    <span className="panel-icon"><Calendar size={14} /></span>
-                    24-Hour Block Planning Gantt
-                  </div>
-                  <div className="panel-actions">
-                    <div className="legend">
-                      <div className="legend-item"><div className="legend-dot" style={{ background: '#f59e0b' }} /> Engineering</div>
-                      <div className="legend-item"><div className="legend-dot" style={{ background: '#3b82f6' }} /> OHE</div>
-                      <div className="legend-item"><div className="legend-dot" style={{ background: '#a855f7' }} /> Signal</div>
-                      <div className="legend-item"><div className="legend-dot" style={{ background: '#64748b', borderRadius: '1px' }} /> Train Strip</div>
+              {/* ── Overview or Block Planning ───────────── */}
+              {(activeNav === 'overview' || activeNav === 'gantt') && (
+                <div className="panel" style={activeNav === 'gantt' ? { flex: 1 } : {}}>
+                  <div className="panel-header">
+                    <div className="panel-title">
+                      <span className="panel-icon"><Calendar size={14} /></span>
+                      24-Hour Block Planning Gantt
                     </div>
-                    <span className="panel-badge pending">PENDING = Draggable</span>
-                    <Wrench size={13} style={{ color: 'var(--text-muted)' }} />
+                    <div className="panel-actions">
+                      <div className="legend">
+                        <div className="legend-item"><div className="legend-dot" style={{ background: '#f59e0b' }} /> Engineering</div>
+                        <div className="legend-item"><div className="legend-dot" style={{ background: '#3b82f6' }} /> OHE</div>
+                        <div className="legend-item"><div className="legend-dot" style={{ background: '#a855f7' }} /> Signal</div>
+                        <div className="legend-item"><div className="legend-dot" style={{ background: '#64748b', borderRadius: '1px' }} /> Train Strip</div>
+                      </div>
+                      <span className="panel-badge pending">PENDING = Draggable</span>
+                      <Wrench size={13} style={{ color: 'var(--text-muted)' }} />
+                    </div>
+                  </div>
+                  <div className="panel-body">
+                    <BlockGanttChart />
                   </div>
                 </div>
-                <div className="panel-body">
-                  <BlockGanttChart />
+              )}
+
+              {/* ── Live Operations Placeholder ───────────── */}
+              {activeNav === 'live' && (
+                <div className="panel" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16, color: 'var(--text-muted)' }}>
+                  <Activity size={48} style={{ opacity: 0.2 }} />
+                  <div style={{ fontSize: 16, fontWeight: 600 }}>Live Operations View</div>
+                  <div style={{ fontSize: 13, maxWidth: 400, textAlign: 'center' }}>
+                    This section will contain live tabular data, CCTV feeds, and detailed train status logs.
+                  </div>
                 </div>
-              </div>
+              )}
             </>
           )}
         </main>
