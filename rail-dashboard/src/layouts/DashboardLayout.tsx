@@ -9,9 +9,13 @@ import { BlockGanttChart } from '../components/BlockGanttChart';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { useRailWebSockets } from '../hooks/useRailWebSockets';
 import { logoutUser } from '../store/authSlice';
-import { selectCorridor } from '../store/corridorSlice';
+import { selectCorridor, fetchCorridors, fetchCorridorSummary } from '../store/corridorSlice';
 import { fetchSyncStatus, triggerSync } from '../store/syncSlice';
-import { generatePlan } from '../store/planSlice';
+import { generatePlan, fetchPlans } from '../store/planSlice';
+import { fetchMaintenanceTasks, fetchMaintenanceTaskSummary } from '../store/maintenanceTaskSlice';
+import { fetchTrainMovements } from '../store/trainScheduleSlice';
+import { fetchBlockWindows } from '../store/blockWindowSlice';
+import { fetchAssets, fetchAssetSummary } from '../store/assetSlice';
 
 interface DashboardLayoutProps {
   children?: React.ReactNode;
@@ -42,6 +46,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
   const [activeNav, setActiveNav] = useState('overview');
   const [showCorridorMenu, setShowCorridorMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
   const [currentTime, setCurrentTime] = useState(() =>
     new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
   );
@@ -61,18 +67,41 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     : null;
 
   const handleLogout = () => dispatch(logoutUser());
-  const handleRefresh = () => { dispatch(fetchSyncStatus()); };
+  const handleRefresh = () => { 
+    // Global data
+    dispatch(fetchSyncStatus()); 
+    dispatch(fetchCorridors());
+    dispatch(fetchCorridorSummary());
+    dispatch(fetchMaintenanceTaskSummary());
+    dispatch(fetchAssetSummary());
+    
+    // Corridor specific data
+    if (selectedCorridor) {
+      dispatch(fetchTrainMovements({ corridor_id: selectedCorridor.id }));
+      dispatch(fetchMaintenanceTasks({ corridorId: selectedCorridor.id }));
+      dispatch(fetchBlockWindows({ corridor_id: selectedCorridor.id }));
+      dispatch(fetchAssets({ corridor_id: selectedCorridor.id }));
+      dispatch(fetchPlans({ corridor_code: selectedCorridor.code }));
+    }
+  };
   const handleTriggerSync = () => {
     dispatch(triggerSync('TMS'));
     dispatch(triggerSync('COA'));
   };
-  const handleGeneratePlan = () => {
+  const handleGeneratePlan = async () => {
     if (!selectedCorridor) return;
-    dispatch(generatePlan({
-      corridorCode: selectedCorridor.code,
-      horizonMode: 'WEEKLY',
-      startDate: new Date().toISOString(),
-    }));
+    try {
+      await dispatch(generatePlan({
+        corridorCode: selectedCorridor.code,
+        horizonMode: 'WEEKLY',
+        startDate: new Date().toISOString(),
+      })).unwrap();
+      
+      // Immediately refresh the dashboard data to show the new AI plan
+      dispatch(fetchMaintenanceTasks({ corridorId: selectedCorridor.id }));
+    } catch (err) {
+      console.error('Failed to generate plan:', err);
+    }
   };
 
   const navItems = [
@@ -163,9 +192,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             <RefreshCw size={16} style={{ flexShrink: 0, animation: isSyncing ? 'spin 1s linear infinite' : 'none', color: 'var(--text-muted)' }} />
             {isSyncing ? 'Syncing…' : 'Sync Railway Data'}
           </button>
-          <a href="#" className="nav-item">
+          <a href="#" className={`nav-item ${activeNav === 'settings' ? 'active' : ''}`}
+            onClick={e => { e.preventDefault(); setActiveNav('settings'); }}>
             <span className="nav-icon"><Settings size={16} /></span>
             Settings
+            {activeNav === 'settings' && <span className="nav-dot" />}
           </a>
         </nav>
 
@@ -246,13 +277,41 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             <button className="icon-btn" title="Refresh data" onClick={handleRefresh}>
               <RefreshCw size={15} />
             </button>
-            <button className="icon-btn" title="Notifications">
-              <Bell size={15} />
-              <span className="notif-dot" />
-            </button>
-            <button className="icon-btn" title="Filter">
-              <Filter size={15} />
-            </button>
+            <div style={{ position: 'relative' }}>
+              <button className="icon-btn" title="Notifications" onClick={() => { setShowNotifications(!showNotifications); setShowFilter(false); }}>
+                <Bell size={15} />
+                <span className="notif-dot" />
+              </button>
+              {showNotifications && (
+                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, width: 280, background: '#fff', border: '1px solid var(--border-default)', borderRadius: 8, boxShadow: '0 10px 25px rgba(0,0,0,0.1)', zIndex: 100 }}>
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-subtle)', fontWeight: 600, fontSize: 13 }}>Notifications</div>
+                  <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent-emerald)', display: 'inline-block', marginRight: 6 }} />
+                    System Live - No new alerts
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div style={{ position: 'relative' }}>
+              <button className="icon-btn" title="Filter" onClick={() => { setShowFilter(!showFilter); setShowNotifications(false); }}>
+                <Filter size={15} />
+              </button>
+              {showFilter && (
+                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, width: 200, background: '#fff', border: '1px solid var(--border-default)', borderRadius: 8, boxShadow: '0 10px 25px rgba(0,0,0,0.1)', zIndex: 100, padding: 8 }}>
+                  <div style={{ padding: '8px', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Quick Filters</div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px', cursor: 'pointer', fontSize: 13 }}>
+                    <input type="checkbox" defaultChecked /> Show Engineering Blocks
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px', cursor: 'pointer', fontSize: 13 }}>
+                    <input type="checkbox" defaultChecked /> Show OHE Blocks
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px', cursor: 'pointer', fontSize: 13 }}>
+                    <input type="checkbox" defaultChecked /> Show Delayed Trains
+                  </label>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
@@ -317,6 +376,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                   <div style={{ fontSize: 16, fontWeight: 600 }}>Live Operations View</div>
                   <div style={{ fontSize: 13, maxWidth: 400, textAlign: 'center' }}>
                     This section will contain live tabular data, CCTV feeds, and detailed train status logs.
+                  </div>
+                </div>
+              )}
+
+              {/* ── Settings Placeholder ───────────── */}
+              {activeNav === 'settings' && (
+                <div className="panel" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16, color: 'var(--text-muted)' }}>
+                  <Settings size={48} style={{ opacity: 0.2 }} />
+                  <div style={{ fontSize: 16, fontWeight: 600 }}>System Settings</div>
+                  <div style={{ fontSize: 13, maxWidth: 400, textAlign: 'center' }}>
+                    User preferences, API configurations, and corridor management tools will be located here.
                   </div>
                 </div>
               )}
