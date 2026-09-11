@@ -312,8 +312,116 @@ const memoryDb = {
     defects: [],
     planning_runs: [],
     maintenance_dependencies: [],
-    block_plans: [],
-    block_plan_tasks: [],
+    block_plans: [
+        {
+            id: 'bp-1111111-1111-1111-1111-111111111111',
+            plan_reference: 'PLAN-NDLS-CNB-OPTIMAL-01',
+            corridor_id: 'c1111111-1111-1111-1111-111111111111',
+            horizon_start_date: new Date('2026-09-11T00:00:00Z'),
+            horizon_end_date: new Date('2026-09-18T00:00:00Z'),
+            generated_at: new Date('2026-09-11T08:00:00Z'),
+            generated_by_user_id: '22222222-2222-2222-2222-222222222222',
+            status: 'OPTIMIZED',
+            approval_state: 'PENDING',
+            version: 1,
+            total_block_duration_minutes: 180,
+            task_count: 2,
+            utilization_percentage: '85.7',
+            conflict_count: 0,
+            score: 88.5,
+            operational_impact_metrics: { disruptionIndex: 22.4, trainPathsProtected: 36 },
+            ai_optimization_metadata: {
+                planning_run_id: 'RUN-NDLS-CNB-BASELINE-01',
+                pipeline_status: 'SUCCESS',
+                data_source: 'COA_BDMS_SMMS',
+                score: 88.5,
+                score_breakdown: {
+                    asset_availability: { raw_score: 95.0, weight: 0.20, weighted_points: 19.0 },
+                    risk_priority: { raw_score: 92.0, weight: 0.25, weighted_points: 23.0 },
+                    operational_efficiency: { raw_score: 84.0, weight: 0.25, weighted_points: 21.0 },
+                    block_efficiency: { raw_score: 88.0, weight: 0.10, weighted_points: 8.8 },
+                    grouping_efficiency: { raw_score: 82.0, weight: 0.10, weighted_points: 8.2 },
+                    overdue_maintenance: { raw_score: 85.0, weight: 0.10, weighted_points: 8.5 },
+                    total_composite_score: 88.5
+                },
+                explanation: {
+                    summary: 'Plan PLAN-NDLS-CNB-OPTIMAL-01 (BALANCED) achieves 88.5/100 composite score, allocating 180 minutes of possession on UP_MAIN at KM 110-125 with zero train delays.',
+                    selected_plan_reason: 'Selected as optimal Pareto baseline: achieves 88.5/100 score with zero train conflicts and 100% critical task clearance.',
+                    key_decisions: [
+                        'Co-allocated Track Tamping (TAMP-UP-112) with OHE Inspection (OHE-INSP-204) under unified 180-minute possession window.',
+                        'Preserved mandatory 15-minute safety headway buffer for Shatabdi Express #12004.',
+                        'Restricted corridor disruption to index 22.4 with 36 passenger train paths protected.'
+                    ],
+                    operational_impact: 'Disruption index held to 22.4. Zero high-priority train paths impacted.',
+                    asset_availability_impact: 'Restores asset health score to 94.8% across Prayagraj division high-density sections.',
+                    priority_maintenance: ['TAMP-UP-112', 'OHE-INSP-204'],
+                    unscheduled_tasks: ['0 critical tasks unscheduled.'],
+                    warnings: [
+                        'Ensure 10-minute electrical isolation clearance before tower wagon deployment.',
+                        'Enforce cautionary speed restriction of 30 km/h on completed tamping section.'
+                    ]
+                },
+                model_versions: {
+                    duration_model: 'xgboost_duration_v1',
+                    risk_model: 'xgboost_risk_v1',
+                    impact_model: 'xgboost_impact_v1',
+                    optimizer: 'google_ortools_cp_sat_v9.15'
+                },
+                optimizer_status: 'OPTIMAL',
+                conflicts: []
+            },
+            created_at: new Date('2026-09-11T08:00:00Z'),
+            updated_at: new Date('2026-09-11T08:00:00Z')
+        }
+    ],
+    block_plan_tasks: [
+        {
+            id: 'bpt-1111111-1111-1111-1111-111111111111',
+            plan_id: 'bp-1111111-1111-1111-1111-111111111111',
+            maintenance_task_id: 't1111111-1111-1111-1111-111111111111',
+            assigned_block_window_id: 'w1111111-1111-1111-1111-111111111111',
+            assigned_start_time: new Date('2026-09-12T01:00:00Z'),
+            assigned_end_time: new Date('2026-09-12T04:00:00Z'),
+            sequence_order: 1,
+            status: 'SCHEDULED',
+            ai_recommendation_score: 0.9200,
+            shadow_task: false,
+            notes: 'Scheduled under AI Baseline Plan',
+            task_code: 'TAMP-UP-112',
+            title: 'Mechanized Heavy Track Tamping & Deep Screening',
+            department: 'ENGG',
+            priority: 1,
+            line_designation: 'UP_MAIN',
+            start_kilometer: 110.000,
+            end_kilometer: 125.000,
+            power_block_required: false,
+            duration_minutes: 180,
+            source_system: 'BDMS'
+        },
+        {
+            id: 'bpt-2222222-2222-2222-2222-222222222222',
+            plan_id: 'bp-1111111-1111-1111-1111-111111111111',
+            maintenance_task_id: 't3333333-3333-3333-3333-333333333333',
+            assigned_block_window_id: 'w1111111-1111-1111-1111-111111111111',
+            assigned_start_time: new Date('2026-09-12T01:30:00Z'),
+            assigned_end_time: new Date('2026-09-12T03:30:00Z'),
+            sequence_order: 2,
+            status: 'SCHEDULED',
+            ai_recommendation_score: 0.8800,
+            shadow_task: true,
+            notes: 'Shadow block pairing with Track Tamping',
+            task_code: 'OHE-INSP-204',
+            title: 'OHE Contact Wire Height & Stagger Inspection',
+            department: 'TRD',
+            priority: 2,
+            line_designation: 'UP_MAIN',
+            start_kilometer: 110.000,
+            end_kilometer: 125.000,
+            power_block_required: true,
+            duration_minutes: 120,
+            source_system: 'TDMS'
+        }
+    ],
     conflicts: [],
     approvals: [],
     audit_logs: [],
