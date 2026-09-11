@@ -18,10 +18,10 @@ export const LinearTrackView: React.FC = () => {
   };
 
   // Build station labels from actual corridor API data
-  const startStation = selectedCorridor?.start_station ?? selectedCorridor?.startStation ?? 'Origin';
-  const endStation   = selectedCorridor?.end_station   ?? selectedCorridor?.endStation   ?? 'Destination';
-  const startKm      = Number(selectedCorridor?.start_kilometer ?? 0);
-  const endKm        = Number(selectedCorridor?.end_kilometer ?? 100);
+  const startStation = selectedCorridor?.startStation || 'Origin';
+  const endStation   = selectedCorridor?.endStation   || 'Destination';
+  const startKm      = 0;
+  const endKm        = Number(selectedCorridor?.lengthKm ?? 100);
 
   // Dynamically derive additional intermediate stations from assets or use just the two endpoints
   const stations = [
