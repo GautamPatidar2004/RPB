@@ -37,10 +37,10 @@ const MaintenanceTaskItem = ({ at, i }: { at: any, i: number }) => {
 
   return (
     <>
-      <div 
+      <div
         onMouseEnter={handleMouseEnter}
         onMouseLeave={() => setHovered(false)}
-        className={`absolute h-7 rounded-lg border ${colorClass} ${shadowClass} flex items-center justify-center cursor-pointer px-1 text-[9px] font-bold text-white whitespace-nowrap z-20`} 
+        className={`absolute h-7 rounded-lg border ${colorClass} ${shadowClass} flex items-center justify-center cursor-pointer px-1 text-[9px] font-bold text-white whitespace-nowrap z-20`}
         style={{ ...pos, top: `${i * 40 + 28}px` }}
       >
         <span className="truncate w-full text-center px-1">
@@ -49,18 +49,18 @@ const MaintenanceTaskItem = ({ at, i }: { at: any, i: number }) => {
       </div>
 
       {hovered && createPortal(
-        <div 
+        <div
           className="fixed transform -translate-x-1/2 -translate-y-full w-64 bg-slate-900/95 backdrop-blur-sm text-white text-xs rounded-xl p-3 shadow-2xl z-[9999] pointer-events-none text-left whitespace-normal leading-relaxed border border-slate-700"
           style={{ top: coords.top - 8, left: coords.left + (coords.width / 2) }}
         >
           <div className="font-bold text-sm mb-1 text-white">{at.maintenance_task_id || 'Unknown Task'}</div>
           <div className="text-slate-300 mb-3">{at.notes || 'No description provided by AI.'}</div>
           <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
-             <span className="text-emerald-400 flex items-center">
-                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                Score: {at.ai_recommendation_score ? (at.ai_recommendation_score * 100).toFixed(1) : 'N/A'}%
-             </span>
-             <span className="text-slate-400 bg-slate-800 px-2 py-0.5 rounded-md">{at.status || 'SCHEDULED'}</span>
+            <span className="text-emerald-400 flex items-center">
+              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+              Score: {at.ai_recommendation_score ? (at.ai_recommendation_score * 100).toFixed(1) : 'N/A'}%
+            </span>
+            <span className="text-slate-400 bg-slate-800 px-2 py-0.5 rounded-md">{at.status || 'SCHEDULED'}</span>
           </div>
           {/* Tooltip Arrow */}
           <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></div>
@@ -76,7 +76,7 @@ const TrainItem = ({ t, i }: { t: any, i: number }) => {
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
 
   const pos = calculatePosition(t.scheduled_departure || t.start_time || t.departure_time, t.scheduled_arrival || t.end_time || t.arrival_time) || { left: `${(i * 10) + 5}%`, width: '15%' };
-  
+
   const handleMouseEnter = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setCoords({ top: rect.top, left: rect.left, width: rect.width });
@@ -85,15 +85,15 @@ const TrainItem = ({ t, i }: { t: any, i: number }) => {
 
   return (
     <>
-      <div 
+      <div
         onMouseEnter={handleMouseEnter}
         onMouseLeave={() => setHovered(false)}
-        className="absolute h-4 bg-slate-400 rounded-full cursor-pointer hover:bg-slate-500 transition-colors z-10" 
+        className="absolute h-4 bg-slate-400 rounded-full cursor-pointer hover:bg-slate-500 transition-colors z-10"
         style={{ ...pos, top: `${i * 32 + 28}px` }}
       ></div>
 
       {hovered && createPortal(
-        <div 
+        <div
           className="fixed transform -translate-x-1/2 -translate-y-full w-56 bg-slate-900/95 backdrop-blur-sm text-white text-xs rounded-xl p-3 shadow-2xl z-[9999] pointer-events-none text-left whitespace-normal leading-relaxed border border-slate-700"
           style={{ top: coords.top - 8, left: coords.left + (coords.width / 2) }}
         >
@@ -103,8 +103,8 @@ const TrainItem = ({ t, i }: { t: any, i: number }) => {
           </div>
           <div className="text-slate-300 mb-3">{t.name || 'Scheduled Train Activity'}</div>
           <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
-             <span className="text-slate-400 bg-slate-800 px-2 py-0.5 rounded-md">{t.train_type || 'EXPRESS'}</span>
-             <span className="text-blue-400">Prio: {t.priority || 1}</span>
+            <span className="text-slate-400 bg-slate-800 px-2 py-0.5 rounded-md">{t.train_type || 'EXPRESS'}</span>
+            <span className="text-blue-400">Prio: {t.priority || 1}</span>
           </div>
           {/* Tooltip Arrow */}
           <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></div>
@@ -119,9 +119,9 @@ export const PlanConsole: React.FC = () => {
   const dispatch = useAppDispatch();
   const selectedCId = useAppSelector(s => s.corridors.selectedCorridorId);
   const corridors = useAppSelector(s => s.corridors.corridors);
-  const selectedCorridor = corridors.find(c => c.id === selectedCId);
-  const { activePlan, isGenerating } = useAppSelector(s => s.plans);
-  const { maintenanceTasks, trains } = useAppSelector(s => s.tasks);
+  const selectedCorridor: any = corridors.find((c: any) => c.id === selectedCId);
+  const { activePlan, isGenerating } = useAppSelector((s: any) => s.plans);
+  const { trains } = useAppSelector((s: any) => s.tasks);
 
   const handleGenerate = () => {
     if (selectedCorridor) {

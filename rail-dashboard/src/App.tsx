@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { CommandCenterLayout } from './layouts/CommandCenterLayout';
 import { UnifiedIngestionHub } from './components/UnifiedIngestionHub';
 import { PlanConsole } from './components/PlanConsole';
-import { useAppDispatch, useAppSelector } from './store/hooks';
+import { useAppDispatch } from './store/hooks';
 import { fetchCorridors } from './store/corridorSlice';
 
 const App: React.FC = () => {
