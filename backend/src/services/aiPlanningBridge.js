@@ -322,25 +322,38 @@ class AIPlanningBridge {
                 t.operational_constraints,
                 a.id AS asset_id, a.asset_code, a.name AS asset_name, a.location AS asset_location,
                 a.asset_type, a.start_kilometer, a.end_kilometer,
-                d.code AS department_code, s.code AS source_system
+                COALESCE(d.code, 'ENGG') AS department_code, COALESCE(s.code, 'BDMS') AS source_system
             FROM maintenance_tasks t
-            JOIN assets a ON t.asset_id = a.id
-            JOIN departments d ON t.department_id = d.id
-            JOIN integration_sources s ON t.source_system_id = s.id
+            LEFT JOIN assets a ON t.asset_id = a.id
+            LEFT JOIN departments d ON t.department_id = d.id
+            LEFT JOIN integration_sources s ON t.source_system_id = s.id
             WHERE t.corridor_id = $1
               AND t.deleted_at IS NULL
             ORDER BY t.priority ASC, t.required_by_date ASC
         `;
-        const tasksRes = await db.query(allTasksQuery, [corridor.id]);
-        const allCorridorTasks = tasksRes.rows;
+        let tasksRes = await db.query(allTasksQuery, [corridor.id]);
+        let allCorridorTasks = tasksRes.rows;
 
         let candidateTasks = [];
         if (Array.isArray(requestIds) && requestIds.length > 0) {
             const idSet = new Set(requestIds);
             candidateTasks = allCorridorTasks.filter(t => idSet.has(t.id) || idSet.has(t.external_record_id) || idSet.has(t.task_code));
         } else {
-            // Default to eligible PENDING/INCOMING tasks
-            candidateTasks = allCorridorTasks.filter(t => t.status === 'PENDING' || t.status === 'INCOMING');
+            // Default to eligible uncompleted tasks (PENDING, INCOMING, POSTPONED, DEFERRED)
+            candidateTasks = allCorridorTasks.filter(t => t.status !== 'SCHEDULED' && t.status !== 'COMPLETED' && t.status !== 'CANCELLED');
+        }
+
+        // Auto-seed if queue is empty
+        if (candidateTasks.length === 0) {
+            console.log(`[AIPlanningBridge]: No pending tasks found for [${corridor.code}]. Auto-generating fresh incoming requests...`);
+            const demoGatewayService = require('./demoGateway/demoGatewayService');
+            await demoGatewayService.generateAndPersist({
+                corridorCode: corridor.code,
+                requestCount: 6,
+                replaceExisting: false
+            });
+            tasksRes = await db.query(allTasksQuery, [corridor.id]);
+            candidateTasks = tasksRes.rows.filter(t => t.status !== 'SCHEDULED' && t.status !== 'COMPLETED');
         }
 
         if (candidateTasks.length === 0) {
