@@ -169,24 +169,24 @@ export const GlobalTelemetryBar: React.FC<GlobalTelemetryBarProps> = ({
   };
 
   return (
-    <div className="bg-slate-900/95 text-slate-100 border-b border-slate-800 px-4 py-2.5 shadow-xl backdrop-blur select-none">
+    <div className="bg-slate-50/95 text-slate-900 border-b border-slate-200 px-4 py-2.5 shadow-xl backdrop-blur select-none">
       <div className="flex flex-wrap items-center justify-between gap-4">
         {/* SECTION IDENTIFIER & DIVISION */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-8 h-8 rounded bg-slate-800 border border-slate-700 text-sky-400 shadow-inner">
+          <div className="flex items-center justify-center w-8 h-8 rounded bg-slate-100 border border-slate-300 text-sky-400 shadow-inner">
             <Radio size={16} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Section Control</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Section Control</span>
               <span className="text-xs font-semibold px-1.5 py-0.2 rounded bg-sky-950 text-sky-300 border border-sky-800">
                 {selectedCorridor?.division || 'Delhi Division'}
               </span>
-              <span className="text-xs font-bold text-slate-300">
+              <span className="text-xs font-bold text-slate-700">
                 {selectedCorridor?.name || 'New Delhi → Kanpur Central'}
               </span>
             </div>
-            <div className="text-[11px] font-mono text-slate-400 flex items-center gap-2 mt-0.5">
+            <div className="text-[11px] font-mono text-slate-500 flex items-center gap-2 mt-0.5">
               <span className="text-sky-400 font-semibold">{selectedCorridor?.code || 'NDLS-CNB'}</span>
               <span>•</span>
               <span>{selectedCorridor?.startStation || 'NDLS'} ({0} KM)</span>
@@ -197,13 +197,13 @@ export const GlobalTelemetryBar: React.FC<GlobalTelemetryBarProps> = ({
         </div>
 
         {/* DIRECTION FILTERS */}
-        <div className="flex items-center bg-slate-950/80 p-0.5 rounded border border-slate-800 text-xs font-semibold">
+        <div className="flex items-center bg-white/80 p-0.5 rounded border border-slate-200 text-xs font-semibold">
           <button
             onClick={() => onDirectionChange('ALL')}
             className={`px-2.5 py-1 rounded transition ${
               activeDirection === 'ALL'
-                ? 'bg-sky-600 text-white shadow'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-sky-600 text-slate-900 shadow'
+                : 'text-slate-500 hover:text-slate-800'
             }`}
           >
             UP & DOWN
@@ -212,8 +212,8 @@ export const GlobalTelemetryBar: React.FC<GlobalTelemetryBarProps> = ({
             onClick={() => onDirectionChange('UP')}
             className={`px-2.5 py-1 rounded transition ${
               activeDirection === 'UP'
-                ? 'bg-sky-600 text-white shadow'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-sky-600 text-slate-900 shadow'
+                : 'text-slate-500 hover:text-slate-800'
             }`}
           >
             UP LINE
@@ -222,8 +222,8 @@ export const GlobalTelemetryBar: React.FC<GlobalTelemetryBarProps> = ({
             onClick={() => onDirectionChange('DOWN')}
             className={`px-2.5 py-1 rounded transition ${
               activeDirection === 'DOWN'
-                ? 'bg-sky-600 text-white shadow'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-sky-600 text-slate-900 shadow'
+                : 'text-slate-500 hover:text-slate-800'
             }`}
           >
             DOWN LINE
@@ -233,52 +233,52 @@ export const GlobalTelemetryBar: React.FC<GlobalTelemetryBarProps> = ({
         {/* TELEMETRY COUNTERS */}
         <div className="flex items-center gap-3">
           {/* Active Trains */}
-          <div className="px-3 py-1 rounded bg-slate-950/70 border border-slate-800 flex items-center gap-2">
+          <div className="px-3 py-1 rounded bg-white/70 border border-slate-200 flex items-center gap-2">
             <div className="flex flex-col">
-              <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Active Trains</span>
+              <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Active Trains</span>
               <span className="font-mono text-sm font-bold text-sky-400 leading-tight">{activeTrainsCount}</span>
             </div>
           </div>
 
           {/* Pending Requests */}
-          <div className="px-3 py-1 rounded bg-slate-950/70 border border-slate-800 flex items-center gap-2">
+          <div className="px-3 py-1 rounded bg-white/70 border border-slate-200 flex items-center gap-2">
             <div className="flex flex-col">
-              <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Pending Blocks</span>
+              <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Pending Blocks</span>
               <span className="font-mono text-sm font-bold text-amber-400 leading-tight">{pendingRequestsCount}</span>
             </div>
           </div>
 
           {/* Scheduled Blocks */}
-          <div className="px-3 py-1 rounded bg-slate-950/70 border border-slate-800 flex items-center gap-2">
+          <div className="px-3 py-1 rounded bg-white/70 border border-slate-200 flex items-center gap-2">
             <div className="flex flex-col">
-              <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Scheduled</span>
+              <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Scheduled</span>
               <span className="font-mono text-sm font-bold text-emerald-400 leading-tight">{scheduledBlocksCount}</span>
             </div>
           </div>
 
           {/* Asset Availability Score */}
-          <div className="px-3 py-1 rounded bg-slate-950/70 border border-slate-800 flex items-center gap-2">
+          <div className="px-3 py-1 rounded bg-white/70 border border-slate-200 flex items-center gap-2">
             <div className="flex flex-col">
-              <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Asset Availability</span>
+              <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Asset Availability</span>
               <span className="font-mono text-sm font-bold text-emerald-300 leading-tight">{assetAvailabilityScore}%</span>
             </div>
           </div>
 
           {/* AI Connection Status */}
           <div className="flex flex-col items-end">
-            <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider mb-0.5">AI Engine</span>
+            <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider mb-0.5">AI Engine</span>
             {renderConnectionStatus(planningState)}
           </div>
         </div>
 
         {/* CLOCK & ACTIONS */}
-        <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
+        <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
           {/* Simulation / Feed Trigger */}
           <button
             onClick={handleSimulateFeed}
             disabled={isSimulatingFeed}
             title="Simulate external feed from BDMS, TDMS, SMMS, COA via Demo Gateway"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition disabled:opacity-50"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-xs font-semibold transition disabled:opacity-50"
           >
             <Database size={13} className={isSimulatingFeed ? 'animate-pulse text-amber-400' : 'text-sky-400'} />
             <span className="hidden xl:inline">Simulate Feed</span>
@@ -289,7 +289,7 @@ export const GlobalTelemetryBar: React.FC<GlobalTelemetryBarProps> = ({
             onClick={handleAutoPlan}
             disabled={isGenerating || isSimulatingFeed}
             title="Trigger AI Planning Run across pending requests (XGBoost ML + OR-Tools + Pareto Scoring)"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-purple-600 hover:bg-purple-500 text-white border border-purple-500 text-xs font-semibold transition shadow-md shadow-purple-950 disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-purple-600 hover:bg-purple-500 text-slate-900 border border-purple-500 text-xs font-semibold transition shadow-md shadow-purple-950 disabled:opacity-50"
           >
             <Cpu size={13} className={isGenerating ? 'animate-spin text-purple-200' : 'text-purple-200'} />
             <span>{isGenerating ? 'Optimizing...' : 'Auto-Plan'}</span>
@@ -299,13 +299,13 @@ export const GlobalTelemetryBar: React.FC<GlobalTelemetryBarProps> = ({
           <button
             onClick={onRefreshAll}
             title="Refresh corridor state"
-            className="p-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
+            className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition"
           >
             <RefreshCw size={14} />
           </button>
 
           {/* Real-time IST Clock */}
-          <div className="px-2.5 py-1 rounded bg-slate-950 border border-slate-800 text-right">
+          <div className="px-2.5 py-1 rounded bg-white border border-slate-200 text-right">
             <div className="font-mono text-sm font-bold tracking-wider text-sky-300 leading-none">{currentTime}</div>
             <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">INDIAN STD TIME</div>
           </div>

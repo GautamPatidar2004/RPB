@@ -43,24 +43,24 @@ export const MasterBlockSchedule: React.FC<MasterBlockScheduleProps> = ({
     if (!containerRef.current) return;
 
     // Dark control room CSS styling for dhtmlx-gantt
-    const styleId = 'dhtmlx-control-room-dark';
+    const styleId = 'dhtmlx-control-room-light';
     let styleTag = document.getElementById(styleId);
     if (!styleTag) {
       styleTag = document.createElement('style');
       styleTag.id = styleId;
       styleTag.textContent = `
-        .gantt_container { background: #090d16 !important; color: #cbd5e1 !important; font-family: 'Inter', sans-serif; border: 1px solid #1e293b !important; }
-        .gantt_grid { background: #090d16 !important; border-right: 1px solid #1e293b !important; }
-        .gantt_grid_scale, .gantt_task_scale { background: #0f172a !important; color: #94a3b8 !important; font-size: 11px; font-weight: 700; border-bottom: 1px solid #1e293b !important; }
-        .gantt_grid_head_cell { color: #94a3b8 !important; border-right: 1px solid #1e293b !important; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
-        .gantt_row, .gantt_row.odd { background: #090d16 !important; border-bottom: 1px solid #141f32 !important; }
-        .gantt_row:hover, .gantt_row.odd:hover { background: #111a2e !important; }
-        .gantt_cell { color: #cbd5e1 !important; font-size: 11px; font-weight: 500; border-right: 1px solid #141f32 !important; }
-        .gantt_task_bg { background: #090d16 !important; }
-        .gantt_task_row, .gantt_task_row.odd { background: transparent !important; border-bottom: 1px solid #141f32 !important; }
-        .gantt_task_row:hover, .gantt_task_row.odd:hover { background: #111a2e !important; }
-        .gantt_task_vscroll, .gantt_ver_scroll, .gantt_hor_scroll { background: #090d16 !important; }
-        .gantt_task_scale .gantt_scale_cell { border-right: 1px solid #141f32 !important; }
+        .gantt_container { background: #ffffff !important; color: #475569 !important; font-family: 'Inter', sans-serif; border: 1px solid #cbd5e1 !important; }
+        .gantt_grid { background: #ffffff !important; border-right: 1px solid #cbd5e1 !important; }
+        .gantt_grid_scale, .gantt_task_scale { background: #ffffff !important; color: #64748b !important; font-size: 11px; font-weight: 700; border-bottom: 1px solid #e2e8f0 !important; }
+        .gantt_grid_head_cell { color: #64748b !important; border-right: 1px solid #cbd5e1 !important; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .gantt_row, .gantt_row.odd { background: #ffffff !important; border-bottom: 1px solid #e2e8f0 !important; }
+        .gantt_row:hover, .gantt_row.odd:hover { background: #f1f5f9 !important; }
+        .gantt_cell { color: #475569 !important; font-size: 11px; font-weight: 500; border-right: 1px solid #e2e8f0 !important; }
+        .gantt_task_bg { background: #ffffff !important; }
+        .gantt_task_row, .gantt_task_row.odd { background: transparent !important; border-bottom: 1px solid #e2e8f0 !important; }
+        .gantt_task_row:hover, .gantt_task_row.odd:hover { background: #f1f5f9 !important; }
+        .gantt_task_vscroll, .gantt_ver_scroll, .gantt_hor_scroll { background: #ffffff !important; }
+        .gantt_task_scale .gantt_scale_cell { border-right: 1px solid #e2e8f0 !important; }
         
         /* Task bar classes */
         .gantt_task_content { font-size: 10px; font-weight: 700; color: #ffffff !important; }
@@ -322,11 +322,11 @@ export const MasterBlockSchedule: React.FC<MasterBlockScheduleProps> = ({
   }, [tasks, pendingTasks, activePlan, trains, activeDirection, selectedTaskId, viewHorizon]);
 
   return (
-    <div className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 flex flex-col shadow-inner select-none relative">
+    <div className="w-full bg-white border border-slate-200 rounded-lg p-4 flex flex-col shadow-sm select-none relative">
       {/* TOOLBAR & CONFLICT NOTIFICATION */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
         <div className="flex items-center gap-3">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
             Master Block Schedule & Train Corridor Grid
           </span>
@@ -338,22 +338,22 @@ export const MasterBlockSchedule: React.FC<MasterBlockScheduleProps> = ({
         </div>
 
         {/* Horizon Toggle */}
-        <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded p-0.5 text-[10px] font-mono">
+        <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded p-0.5 text-[10px] font-mono">
           <button
             onClick={() => setViewHorizon('24H')}
-            className={`px-2 py-0.5 rounded transition ${viewHorizon === '24H' ? 'bg-purple-600 text-white font-bold' : 'text-slate-400 hover:text-slate-200'}`}
+            className={`px-2 py-0.5 rounded transition ${viewHorizon === '24H' ? 'bg-purple-600 text-white font-bold' : 'text-slate-500 hover:text-slate-800'}`}
           >
             24 Hours
           </button>
           <button
             onClick={() => setViewHorizon('48H')}
-            className={`px-2 py-0.5 rounded transition ${viewHorizon === '48H' ? 'bg-purple-600 text-white font-bold' : 'text-slate-400 hover:text-slate-200'}`}
+            className={`px-2 py-0.5 rounded transition ${viewHorizon === '48H' ? 'bg-purple-600 text-white font-bold' : 'text-slate-500 hover:text-slate-800'}`}
           >
             48 Hours
           </button>
           <button
             onClick={() => setViewHorizon('7D')}
-            className={`px-2 py-0.5 rounded transition ${viewHorizon === '7D' ? 'bg-purple-600 text-white font-bold' : 'text-slate-400 hover:text-slate-200'}`}
+            className={`px-2 py-0.5 rounded transition ${viewHorizon === '7D' ? 'bg-purple-600 text-white font-bold' : 'text-slate-500 hover:text-slate-800'}`}
           >
             7-Day Horizon
           </button>
@@ -377,7 +377,7 @@ export const MasterBlockSchedule: React.FC<MasterBlockScheduleProps> = ({
             <span className="w-2.5 h-2.5 rounded bg-purple-600 border border-purple-400 inline-block" />
             <span>AI Mega-Block</span>
           </div>
-          <div className="flex items-center gap-1.5 text-slate-400">
+          <div className="flex items-center gap-1.5 text-slate-500">
             <span className="w-2.5 h-2.5 rounded bg-sky-900 border border-dashed border-sky-400 inline-block" />
             <span>Train Path (Locked)</span>
           </div>
@@ -407,7 +407,7 @@ export const MasterBlockSchedule: React.FC<MasterBlockScheduleProps> = ({
       <div
         ref={containerRef}
         style={{ width: '100%', height: '360px' }}
-        className="rounded border border-slate-800 overflow-hidden"
+        className="rounded border border-slate-200 overflow-hidden"
       />
     </div>
   );
