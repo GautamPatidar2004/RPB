@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+:root {
+  /* Light Theme Design Tokens */
+  --bg-base:        #f4f7fc;
+  --bg-surface:     rgba(255, 255, 255, 0.85); /* Glass surface */
+  --bg-elevated:    rgba(255, 255, 255, 0.95);
+  --bg-overlay:     rgba(255, 255, 255, 0.6);
+  --bg-hover:       rgba(237, 241, 249, 0.7);
+
+  --border-subtle:  rgba(205, 213, 232, 0.4);
+  --border-default: rgba(205, 213, 232, 0.7);
+  --border-active:  rgba(160, 175, 208, 1);
+
+  --accent-blue:        #2563eb;
+  --accent-blue-light:  rgba(219, 234, 254, 0.6);
+  --accent-blue-glow:   rgba(37, 99, 235, 0.25);
+  
+  --accent-amber:       #d97706;
+  --accent-amber-light: rgba(254, 243, 199, 0.6);
+  
+  --accent-emerald:     #059669;
+  --accent-emerald-light: rgba(209, 250, 229, 0.6);
+  
+  --accent-red:         #dc2626;
+  --accent-red-light:   rgba(254, 226, 226, 0.6);
+  
+  --accent-purple:      #7c3aed;
+  --accent-purple-light: rgba(237, 233, 254, 0.6);
+
+  --text-primary:   #0f172a;
+  --text-secondary: #334155;
+  --text-muted:     #64748b;
+
+  --shadow-sm:   0 2px 8px rgba(15,23,42,0.04), 0 1px 2px rgba(15,23,42,0.02);
+  --shadow-md:   0 8px 24px rgba(15,23,42,0.06), 0 2px 8px rgba(15,23,42,0.03);
+  --shadow-lg:   0 16px 40px rgba(15,23,42,0.08), 0 8px 16px rgba(15,23,42,0.04);
+  --shadow-glow: 0 0 16px rgba(37,99,235,0.15);
+
+  --sidebar-w: 260px;
+}
+
+
+html, body, #root {
+  height: 100%;
+  background: linear-gradient(135deg, #e4ebf5 0%, #f4f7fc 50%, #e2e8f0 100%);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-active); }
+
+/* Utility Classes */
+.glass-panel {
+  background: var(--bg-surface);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-md);
+  border-radius: 12px;
+}
+
+.glow-text {
+  text-shadow: 0 0 12px var(--accent-blue-glow);
+}
+
+/* Animations */
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+  70%  { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+@keyframes spin { 
+  from { transform: rotate(0deg); } 
+  to { transform: rotate(360deg); } 
+}
