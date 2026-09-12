@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import apiClient from '../services/apiClient';
+import apiClient, { healthCheckClient } from '../services/apiClient';
 
 export interface AIMetadata {
   planning_run_id?: string;
@@ -109,11 +109,32 @@ const initialState: PlanState = {
   activePlan: null,
   planningRuns: [],
   activePlanningRun: null,
-  planningState: 'CONNECTED',
+  planningState: 'IDLE',
   isLoading: false,
   isGenerating: false,
   error: null,
 };
+
+// Dedicated AI Engine health check — polls /api/health/ai-engine on the backend proxy.
+// Uses healthCheckClient (no auth headers, no 401-redirect interceptor) so this check
+// is fully independent of the user's login state and never triggers a page reload.
+// This is the ONLY thunk allowed to set planningState to CONNECTED / ERROR.
+export const checkAIEngineHealth = createAsyncThunk(
+  'plans/checkAIEngineHealth',
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await healthCheckClient.get('/api/health/ai-engine');
+      if (res.data?.connected) {
+        return { connected: true, status: res.data.status };
+      }
+      return rejectWithValue(res.data?.details || 'AI engine unreachable');
+    } catch (err: any) {
+      const detail = err.response?.data?.details ?? err.message ?? 'AI engine unreachable';
+      return rejectWithValue(detail);
+    }
+  }
+);
+
 
 // Fetch plans list
 export const fetchPlans = createAsyncThunk(
@@ -239,6 +260,8 @@ const planSlice = createSlice({
       .addCase(fetchPlans.pending, (state) => {
         state.isLoading = true;
         state.error = null;
+        // NOTE: fetchPlans does NOT control planningState.
+        // AI Engine status is managed exclusively by checkAIEngineHealth.
       })
       .addCase(fetchPlans.fulfilled, (state, action: PayloadAction<any>) => {
         state.isLoading = false;
@@ -260,6 +283,7 @@ const planSlice = createSlice({
       .addCase(fetchPlans.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
+        // NOTE: fetchPlans failure does NOT mark AI engine as disconnected.
       });
 
     // fetchPlanById
@@ -294,7 +318,15 @@ const planSlice = createSlice({
       .addCase(submitPlanningRun.fulfilled, (state, action: PayloadAction<any>) => {
         state.isGenerating = false;
         const result = action.payload;
+
+        if (result?.status === 'COMPLETED_WITH_UNSCHEDULED_TASKS') {
+          // Partial success — engine worked, but no window fit all tasks
+          state.planningState = 'NO_FEASIBLE_PLAN';
+          return;
+        }
+
         if (result?.success && result?.plan) {
+          // Full success — plan generated and persisted
           state.planningState = 'SUCCESS';
           const meta = result.aiMetadata || result.plan.aiOptimizationMetadata || result.plan.ai_optimization_metadata;
           const plan = {
@@ -323,17 +355,30 @@ const planSlice = createSlice({
             updated_at: new Date().toISOString(),
             plan: plan,
           };
-        } else if (result?.status === 'COMPLETED_WITH_UNSCHEDULED_TASKS') {
-          state.planningState = 'NO_FEASIBLE_PLAN';
-        } else {
-          state.planningState = 'ERROR';
-          state.error = result?.error || 'Planning pipeline returned non-optimal result.';
+          return;
         }
+
+        if (result?.success && result?.scheduledCount !== undefined) {
+          // Backend returned success with scheduledCount but no plan object yet —
+          // treat as partial success and restore CONNECTED so the engine badge is accurate.
+          state.planningState = 'CONNECTED';
+          state.error = result?.error || null;
+          return;
+        }
+
+        // Planning run failed (bad data, constraints, etc.) — but the AI ENGINE itself
+        // is still connected. Go back to CONNECTED, not ERROR/DISCONNECTED.
+        state.planningState = 'CONNECTED';
+        state.error = result?.error || 'Planning pipeline could not generate a feasible plan.';
       })
       .addCase(submitPlanningRun.rejected, (state, action) => {
+        // A rejected dispatch means the HTTP call itself failed (network/auth).
+        // But DO NOT mark the engine as DISCONNECTED — the next health poll will
+        // update the status accurately. Restore CONNECTED optimistically.
         state.isGenerating = false;
-        state.planningState = 'ERROR';
+        state.planningState = 'CONNECTED';
         state.error = action.payload as string;
+
       });
 
     // approvePlan
@@ -356,6 +401,35 @@ const planSlice = createSlice({
     builder.addCase(fetchPlanningRuns.fulfilled, (state, action: PayloadAction<any>) => {
       state.planningRuns = action.payload?.data ?? [];
     });
+
+    // checkAIEngineHealth — sole authority over CONNECTED / ERROR planningState
+    builder
+      .addCase(checkAIEngineHealth.pending, (state) => {
+        // Only update to IDLE when we haven't established a connection yet.
+        // If already CONNECTED / SUCCESS / NO_FEASIBLE_PLAN, keep the existing state
+        // so the badge doesn't flicker on every poll.
+        if (state.planningState === 'IDLE' || state.planningState === 'ERROR') {
+          state.planningState = 'IDLE';
+        }
+      })
+      .addCase(checkAIEngineHealth.fulfilled, (state) => {
+        // Mark CONNECTED only if we are not in the middle of a planning run
+        if (
+          state.planningState !== 'CALCULATING' &&
+          state.planningState !== 'RE_OPTIMIZING'
+        ) {
+          state.planningState = 'CONNECTED';
+        }
+      })
+      .addCase(checkAIEngineHealth.rejected, (state) => {
+        // Mark ERROR only if we are not mid-calculation (avoid overwriting CALCULATING)
+        if (
+          state.planningState !== 'CALCULATING' &&
+          state.planningState !== 'RE_OPTIMIZING'
+        ) {
+          state.planningState = 'ERROR';
+        }
+      });
   },
 });
 

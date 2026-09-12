@@ -151,7 +151,10 @@ class ConstraintEngine:
                 unique_violations.append(v)
 
         crit_count = sum(1 for v in unique_violations if v.severity == Severity.CRITICAL)
-        is_feas = len(unique_violations) == 0
+        # A plan is infeasible ONLY when it has CRITICAL violations (e.g. direct train path overlap
+        # with high-priority passenger services). MEDIUM/HIGH headway buffer warnings are advisory
+        # and do not block a plan from being scheduled — they are reported as warnings only.
+        is_feas = crit_count == 0
 
         return FeasibilityReport(
             is_feasible=is_feas,
@@ -161,6 +164,7 @@ class ConstraintEngine:
             evaluated_block_count=len(candidates),
             evaluated_train_count=len(train_list)
         )
+
 
     def is_feasible(
         self,

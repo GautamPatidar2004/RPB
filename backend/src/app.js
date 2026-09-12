@@ -1,4 +1,5 @@
 const express = require('express');
+const http = require('http');
 const authRoutes = require('./routes/authRoutes');
 const demoProtectedRoutes = require('./routes/demoProtectedRoutes');
 const corridorRoutes = require('./routes/corridorRoutes');
@@ -47,13 +48,57 @@ app.get('/', (req, res) => {
     });
 });
 
-// Health check endpoint
+// Health check endpoint (backend itself)
 app.get('/api/health', (req, res) => {
     res.status(200).json({
         status: 'UP',
         service: 'Indian Railways Automatic Block Planning API',
         timestamp: new Date().toISOString()
     });
+});
+
+// AI Engine health proxy — polls the Python AI Service on port 8000.
+// Allows the browser to check AI engine status without CORS issues.
+app.get('/api/health/ai-engine', (req, res) => {
+    const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000';
+    const url = new URL('/health', AI_SERVICE_URL);
+
+    const proxyReq = http.request(
+        { hostname: url.hostname, port: url.port || 8000, path: url.pathname, method: 'GET', timeout: 4000 },
+        (proxyRes) => {
+            let body = '';
+            proxyRes.on('data', (chunk) => { body += chunk; });
+            proxyRes.on('end', () => {
+                if (proxyRes.statusCode === 200) {
+                    try {
+                        const data = JSON.parse(body);
+                        return res.status(200).json({
+                            connected: true,
+                            status: data.status || 'healthy',
+                            service: data.service || 'railway-ai-service',
+                            version: data.version || '1.0.0',
+                            timestamp: new Date().toISOString()
+                        });
+                    } catch (_) {
+                        // Non-JSON but 200 response is still healthy
+                        return res.status(200).json({ connected: true, status: 'healthy', timestamp: new Date().toISOString() });
+                    }
+                }
+                return res.status(502).json({ connected: false, status: 'unhealthy', details: `AI service returned HTTP ${proxyRes.statusCode}`, timestamp: new Date().toISOString() });
+            });
+        }
+    );
+
+    proxyReq.on('timeout', () => {
+        proxyReq.destroy();
+        res.status(503).json({ connected: false, status: 'timeout', details: 'AI service did not respond within 4s', timestamp: new Date().toISOString() });
+    });
+
+    proxyReq.on('error', (err) => {
+        res.status(503).json({ connected: false, status: 'unreachable', details: err.message, timestamp: new Date().toISOString() });
+    });
+
+    proxyReq.end();
 });
 
 // Mount core routes

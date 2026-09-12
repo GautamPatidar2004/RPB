@@ -2,8 +2,8 @@ import axios from 'axios';
 
 export const API_BASE_URL = 
   import.meta.env.VITE_API_BASE_URL || 
-  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:5000'
+  (typeof window !== 'undefined' && !window.location.hostname.includes('render.com')
+    ? `http://${window.location.hostname}:5000`
     : 'https://rpb-backend.onrender.com');
 
 const apiClient = axios.create({
@@ -32,5 +32,12 @@ apiClient.interceptors.response.use(
     return Promise.reject(err);
   }
 );
+
+// Plain client for health/status checks — no auth headers, no redirect interceptors.
+// Used to probe the AI engine health proxy without affecting auth state.
+export const healthCheckClient = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 6000,
+});
 
 export default apiClient;
