@@ -1,85 +1,23 @@
-import { useEffect } from 'react';
-import { useAppDispatch, useAppSelector } from './store/hooks';
-import { fetchCurrentUser } from './store/authSlice';
-import { fetchCorridors, fetchCorridorSummary } from './store/corridorSlice';
-import { fetchTrainMovements } from './store/trainScheduleSlice';
-import { fetchMaintenanceTasks, fetchMaintenanceTaskSummary } from './store/maintenanceTaskSlice';
-import { fetchSyncStatus } from './store/syncSlice';
-import { fetchPlans, checkAIEngineHealth } from './store/planSlice';
-import { fetchBlockWindows } from './store/blockWindowSlice';
-import { fetchAssets, fetchAssetSummary } from './store/assetSlice';
-import { LoginPage } from './pages/LoginPage';
-import { DashboardLayout } from './layouts/DashboardLayout';
+import React, { useEffect, useState } from 'react';
+import { CommandCenterLayout } from './layouts/CommandCenterLayout';
+import { UnifiedIngestionHub } from './components/UnifiedIngestionHub';
+import { PlanConsole } from './components/PlanConsole';
+import { useAppDispatch, checkAIEngineHealth } from './store/hooks';
+import { fetchCorridors } from './store/corridorSlice';
 
-function App() {
+const App: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { isAuthenticated } = useAppSelector(s => s.auth);
-  const corridors = useAppSelector(s => s.corridors.corridors);
-  const selectedCorridorId = useAppSelector(s => s.corridors.selectedCorridorId);
-  const selectedCorridor = corridors.find(c => c.id === selectedCorridorId);
+  const [activeTab, setActiveTab] = useState<'hub' | 'plan'>('hub');
 
-  // On mount: validate existing token
   useEffect(() => {
-    const token = localStorage.getItem('rail_token');
-    if (token) {
-      dispatch(fetchCurrentUser());
-    }
+    dispatch(fetchCorridors());
   }, [dispatch]);
 
-  // After auth: load all dashboard data
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    dispatch(fetchCorridors());
-    dispatch(fetchCorridorSummary());
-    dispatch(fetchSyncStatus());
-    dispatch(fetchMaintenanceTaskSummary());
-    dispatch(fetchAssetSummary());
-  }, [isAuthenticated, dispatch]);
-
-  // When corridor is selected, fetch corridor-scoped data
-  useEffect(() => {
-    if (!isAuthenticated || !selectedCorridorId) return;
-    dispatch(fetchTrainMovements({ corridor_id: selectedCorridorId }));
-    dispatch(fetchMaintenanceTasks({ corridorId: selectedCorridorId }));
-    dispatch(fetchPlans({ corridor_code: selectedCorridor?.code }));
-    dispatch(fetchBlockWindows({ corridor_id: selectedCorridorId }));
-    dispatch(fetchAssets({ corridor_id: selectedCorridorId }));
-  }, [isAuthenticated, selectedCorridorId, dispatch]);
-
-  // AI Engine health check — run shortly after auth, then poll every 30s.
-  // The 1s delay lets the backend and HMR settle before the first probe.
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    const initialDelay = setTimeout(() => {
-      dispatch(checkAIEngineHealth());
-    }, 1000);
-    const healthInterval = setInterval(() => {
-      dispatch(checkAIEngineHealth());
-    }, 30000);
-    return () => {
-      clearTimeout(initialDelay);
-      clearInterval(healthInterval);
-    };
-  }, [isAuthenticated, dispatch]);
-
-  // Auto-refresh live data every 60 seconds
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    const interval = setInterval(() => {
-      dispatch(fetchSyncStatus());
-      if (selectedCorridorId) {
-        dispatch(fetchTrainMovements({ corridor_id: selectedCorridorId }));
-        dispatch(fetchMaintenanceTasks({ corridorId: selectedCorridorId }));
-      }
-    }, 60000);
-    return () => clearInterval(interval);
-  }, [isAuthenticated, selectedCorridorId, dispatch]);
-
-  if (!isAuthenticated) {
-    return <LoginPage />;
-  }
-
-  return <DashboardLayout />;
-}
+  return (
+    <CommandCenterLayout activeTab={activeTab} setActiveTab={setActiveTab}>
+      {activeTab === 'hub' ? <UnifiedIngestionHub /> : <PlanConsole />}
+    </CommandCenterLayout>
+  );
+};
 
 export default App;

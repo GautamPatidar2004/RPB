@@ -1,438 +1,46 @@
-import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import apiClient, { healthCheckClient } from '../services/apiClient';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import apiClient from '../services/apiClient';
 
-export interface AIMetadata {
-  planning_run_id?: string;
-  pipeline_status?: string;
-  score?: number;
-  score_breakdown?: Record<string, any>;
-  predicted_metrics?: {
-    mean_predicted_duration_minutes?: number;
-    scheduled_tasks_count?: number;
-    unscheduled_tasks_count?: number;
-  };
-  optimization_metrics?: {
-    solver_status?: string;
-    solve_time_ms?: number;
-    objective_score?: number;
-    schedule_rate_pct?: number;
-  };
-  explanation?: {
-    summary?: string;
-    selected_plan_reason?: string;
-    key_decisions?: string[];
-    operational_impact?: string;
-    asset_availability_impact?: string;
-    priority_maintenance?: string[];
-    unscheduled_tasks?: string[];
-    warnings?: string[];
-    tradeoffs?: any[];
-  } | null;
-  model_versions?: Record<string, string>;
-  optimizer_status?: string;
-  grouped_tasks?: any[];
-  unscheduled_requests?: any[];
-  warnings?: string[];
-  conflicts?: any[];
-  source_systems?: string[];
-  stage_durations_ms?: Record<string, number>;
-  total_execution_time_ms?: number;
-}
+export const generatePlan = createAsyncThunk('plans/generate', async (data: any) => {
+  const res = await apiClient.post('/api/plans/generate', data);
+  return res.data;
+});
 
-export interface BlockPlan {
-  id: string;
-  planReference?: string;
-  plan_reference?: string;
-  corridorId?: string;
-  corridor_id?: string;
-  corridorCode?: string;
-  corridor_code?: string;
-  status: 'OPTIMIZED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED';
-  approvalState?: 'PENDING' | 'APPROVED' | 'REJECTED';
-  approval_state?: 'PENDING' | 'APPROVED' | 'REJECTED';
-  horizonMode?: 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
-  horizonStartDate?: string;
-  horizon_start_date?: string;
-  horizonEndDate?: string;
-  horizon_end_date?: string;
-  version: number;
-  utilizationPercentage?: string | number;
-  utilization_percentage?: string | number;
-  totalBlockDurationMinutes?: number;
-  total_block_duration_minutes?: number;
-  conflictCount?: number;
-  conflict_count?: number;
-  createdAt?: string;
-  created_at?: string;
-  tasks?: any[];
-  assignedTasks?: any[];
-  conflicts?: any[];
-  approvals?: any[];
-  score?: number;
-  metrics?: any;
-  aiOptimizationMetadata?: AIMetadata;
-  ai_optimization_metadata?: AIMetadata;
-}
-
-export interface PlanningRun {
-  id: string;
-  planning_run_id: string;
-  corridor_id: string;
-  horizon_start: string;
-  horizon_end: string;
-  input_request_ids: string[] | string;
-  source_systems: string[] | string;
-  status: 'CREATED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
-  plan_id: string | null;
-  failure_reason: string | null;
-  execution_metadata?: AIMetadata | Record<string, any>;
-  created_at: string;
-  updated_at: string;
-  plan?: BlockPlan | null;
-}
-
-export type PlanningTelemetryState = 'IDLE' | 'CONNECTED' | 'CALCULATING' | 'RE_OPTIMIZING' | 'SUCCESS' | 'ERROR' | 'NO_FEASIBLE_PLAN';
-
-interface PlanState {
-  plans: BlockPlan[];
-  activePlan: BlockPlan | null;
-  planningRuns: PlanningRun[];
-  activePlanningRun: PlanningRun | null;
-  planningState: PlanningTelemetryState;
-  isLoading: boolean;
-  isGenerating: boolean;
-  error: string | null;
-}
-
-const initialState: PlanState = {
-  plans: [],
-  activePlan: null,
-  planningRuns: [],
-  activePlanningRun: null,
-  planningState: 'IDLE',
-  isLoading: false,
-  isGenerating: false,
-  error: null,
-};
-
-// Dedicated AI Engine health check — polls /api/health/ai-engine on the backend proxy.
-// Uses healthCheckClient (no auth headers, no 401-redirect interceptor) so this check
-// is fully independent of the user's login state and never triggers a page reload.
-// This is the ONLY thunk allowed to set planningState to CONNECTED / ERROR.
-export const checkAIEngineHealth = createAsyncThunk(
-  'plans/checkAIEngineHealth',
-  async (_, { rejectWithValue }) => {
-    try {
-      const res = await healthCheckClient.get('/api/health/ai-engine');
-      if (res.data?.connected) {
-        return { connected: true, status: res.data.status };
-      }
-      return rejectWithValue(res.data?.details || 'AI engine unreachable');
-    } catch (err: any) {
-      const detail = err.response?.data?.details ?? err.message ?? 'AI engine unreachable';
-      return rejectWithValue(detail);
-    }
-  }
-);
-
-
-// Fetch plans list
-export const fetchPlans = createAsyncThunk(
-  'plans/fetchAll',
-  async (params: { corridor_code?: string; status?: string } = {}, { rejectWithValue }) => {
-    try {
-      const res = await apiClient.get('/api/plans', { params });
-      return res.data;
-    } catch (err: any) {
-      return rejectWithValue(err.response?.data?.error ?? err.response?.data?.message ?? 'Failed to load plans.');
-    }
-  }
-);
-
-// Fetch specific plan details
-export const fetchPlanById = createAsyncThunk(
-  'plans/fetchById',
-  async (id: string, { rejectWithValue }) => {
-    try {
-      const res = await apiClient.get(`/api/plans/${id}`);
-      return res.data;
-    } catch (err: any) {
-      return rejectWithValue(err.response?.data?.error ?? err.response?.data?.message ?? 'Failed to load plan.');
-    }
-  }
-);
-
-// Submit AI planning run (Prompt 3 end-to-end connection)
-export const submitPlanningRun = createAsyncThunk(
-  'plans/submitPlanningRun',
-  async (
-    payload: {
-      corridorCode?: string;
-      corridorId?: string;
-      horizonStart?: string;
-      horizonEnd?: string;
-      requestIds?: string[];
-      executeNow?: boolean;
-      forceDeterministicExplanation?: boolean;
-    },
-    { rejectWithValue }
-  ) => {
-    try {
-      const res = await apiClient.post('/api/planning-runs', {
-        corridorCode: payload.corridorCode || 'NDLS-CNB',
-        horizonStart: payload.horizonStart,
-        horizonEnd: payload.horizonEnd,
-        requestIds: payload.requestIds,
-        execute_now: payload.executeNow !== false,
-        force_deterministic_explanation: payload.forceDeterministicExplanation ?? true,
-      });
-      return res.data;
-    } catch (err: any) {
-      const msg = err.response?.data?.error ?? err.response?.data?.message ?? 'Failed to execute planning run.';
-      return rejectWithValue(msg);
-    }
-  }
-);
-
-// Approve & lock plan
-export const approvePlan = createAsyncThunk(
-  'plans/approvePlan',
-  async (
-    { planId, notes }: { planId: string; notes?: string },
-    { rejectWithValue }
-  ) => {
-    try {
-      const res = await apiClient.post(`/api/plans/${planId}/approve`, {
-        notes: notes || 'Approved & Locked by Section Controller via Command Dashboard',
-      });
-      return res.data;
-    } catch (err: any) {
-      return rejectWithValue(err.response?.data?.error ?? err.response?.data?.message ?? 'Failed to approve block plan.');
-    }
-  }
-);
-
-// Fetch historical planning runs
-export const fetchPlanningRuns = createAsyncThunk(
-  'plans/fetchPlanningRuns',
-  async (params: { corridor_id?: string; status?: string } = {}, { rejectWithValue }) => {
-    try {
-      const res = await apiClient.get('/api/planning-runs', { params });
-      return res.data;
-    } catch (err: any) {
-      return rejectWithValue(err.response?.data?.error ?? 'Failed to load planning runs.');
-    }
-  }
-);
+export const resolveConflict = createAsyncThunk('plans/resolveConflict', async ({ planId, conflictId, resolutionData }: { planId: string, conflictId: string, resolutionData: any }) => {
+  const res = await apiClient.patch(`/api/plans/${planId}/conflicts/${conflictId}`, resolutionData);
+  return res.data;
+});
 
 const planSlice = createSlice({
   name: 'plans',
-  initialState,
-  reducers: {
-    clearPlanError: (state) => {
-      state.error = null;
-    },
-    setPlanningState: (state, action: PayloadAction<PlanningTelemetryState>) => {
-      state.planningState = action.payload;
-    },
-    setActivePlan: (state, action: PayloadAction<BlockPlan | null>) => {
-      state.activePlan = action.payload;
-    },
-    setActivePlanningRun: (state, action: PayloadAction<PlanningRun | null>) => {
-      state.activePlanningRun = action.payload;
-    },
-    updateTaskSchedule: (
-      state,
-      action: PayloadAction<{ taskId: string; scheduledStart: string; scheduledEnd: string }>
-    ) => {
-      if (state.activePlan && state.activePlan.tasks) {
-        const task = state.activePlan.tasks.find((t) => t.id === action.payload.taskId);
-        if (task) {
-          task.scheduled_start = action.payload.scheduledStart;
-          task.scheduled_end = action.payload.scheduledEnd;
-        }
-      }
-    },
-  },
+  initialState: { activePlan: null as any, isGenerating: false, isResolving: false },
+  reducers: {},
   extraReducers: (builder) => {
-    // fetchPlans
-    builder
-      .addCase(fetchPlans.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-        // NOTE: fetchPlans does NOT control planningState.
-        // AI Engine status is managed exclusively by checkAIEngineHealth.
-      })
-      .addCase(fetchPlans.fulfilled, (state, action: PayloadAction<any>) => {
-        state.isLoading = false;
-        const rawPlans = action.payload?.data ?? action.payload?.plans ?? [];
-        state.plans = rawPlans.map((p: any) => {
-          const meta = p.aiOptimizationMetadata || p.ai_optimization_metadata;
-          return {
-            ...p,
-            aiOptimizationMetadata: meta,
-            ai_optimization_metadata: meta,
-            score: p.score ?? meta?.score ?? p.metrics?.score ?? 75.0,
-            tasks: p.tasks || p.assignedTasks || [],
-          };
-        });
-        if (state.plans.length > 0) {
-          state.activePlan = state.plans[0];
-        }
-      })
-      .addCase(fetchPlans.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload as string;
-        // NOTE: fetchPlans failure does NOT mark AI engine as disconnected.
-      });
-
-    // fetchPlanById
-    builder.addCase(fetchPlanById.fulfilled, (state, action: PayloadAction<any>) => {
-      const plan = action.payload?.data ?? action.payload?.plan ?? null;
-      if (plan) {
-        const meta = plan.aiOptimizationMetadata || plan.ai_optimization_metadata;
-        const normalized = {
-          ...plan,
-          aiOptimizationMetadata: meta,
-          ai_optimization_metadata: meta,
-          score: plan.score ?? meta?.score ?? plan.metrics?.score ?? 75.0,
-          tasks: plan.tasks || plan.assignedTasks || [],
-        };
-        state.activePlan = normalized;
-        const idx = state.plans.findIndex((p) => p.id === plan.id);
-        if (idx !== -1) {
-          state.plans[idx] = normalized;
-        } else {
-          state.plans.unshift(normalized);
-        }
-      }
-    });
-
-    // submitPlanningRun
-    builder
-      .addCase(submitPlanningRun.pending, (state) => {
-        state.isGenerating = true;
-        state.planningState = 'CALCULATING';
-        state.error = null;
-      })
-      .addCase(submitPlanningRun.fulfilled, (state, action: PayloadAction<any>) => {
+    builder.addCase(generatePlan.pending, (state) => { state.isGenerating = true; })
+      .addCase(generatePlan.fulfilled, (state, action) => {
         state.isGenerating = false;
-        const result = action.payload;
-
-        if (result?.status === 'COMPLETED_WITH_UNSCHEDULED_TASKS') {
-          // Partial success — engine worked, but no window fit all tasks
-          state.planningState = 'NO_FEASIBLE_PLAN';
-          return;
-        }
-
-        if (result?.success && result?.plan) {
-          // Full success — plan generated and persisted
-          state.planningState = 'SUCCESS';
-          const meta = result.aiMetadata || result.plan.aiOptimizationMetadata || result.plan.ai_optimization_metadata;
-          const plan = {
-            ...result.plan,
-            aiOptimizationMetadata: meta,
-            ai_optimization_metadata: meta,
-            score: result.score ?? meta?.score ?? result.plan.metrics?.score ?? 75.0,
-            tasks: result.plan.tasks || result.plan.assignedTasks || [],
-            conflicts: meta?.conflicts || result.plan.conflicts || [],
+        if (action.payload.plan) {
+          state.activePlan = {
+            ...action.payload.plan,
+            assignedTasks: action.payload.assignedTasks || [],
+            conflicts: action.payload.conflicts || [],
+            metrics: action.payload.metrics || {}
           };
-          state.activePlan = plan;
-          state.plans.unshift(plan);
-          state.activePlanningRun = {
-            id: result.plan.id,
-            planning_run_id: result.planningRunId,
-            corridor_id: result.plan.corridor_id,
-            horizon_start: result.plan.horizon_start_date,
-            horizon_end: result.plan.horizon_end_date,
-            input_request_ids: [],
-            source_systems: meta?.source_systems || ['DEMO'],
-            status: 'COMPLETED',
-            plan_id: result.plan.id,
-            failure_reason: null,
-            execution_metadata: meta,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            plan: plan,
-          };
-          return;
         }
-
-        if (result?.success && result?.scheduledCount !== undefined) {
-          // Backend returned success with scheduledCount but no plan object yet —
-          // treat as partial success and restore CONNECTED so the engine badge is accurate.
-          state.planningState = 'CONNECTED';
-          state.error = result?.error || null;
-          return;
-        }
-
-        // Planning run failed (bad data, constraints, etc.) — but the AI ENGINE itself
-        // is still connected. Go back to CONNECTED, not ERROR/DISCONNECTED.
-        state.planningState = 'CONNECTED';
-        state.error = result?.error || 'Planning pipeline could not generate a feasible plan.';
       })
-      .addCase(submitPlanningRun.rejected, (state, action) => {
-        // A rejected dispatch means the HTTP call itself failed (network/auth).
-        // But DO NOT mark the engine as DISCONNECTED — the next health poll will
-        // update the status accurately. Restore CONNECTED optimistically.
-        state.isGenerating = false;
-        state.planningState = 'CONNECTED';
-        state.error = action.payload as string;
-
-      });
-
-    // approvePlan
-    builder
-      .addCase(approvePlan.fulfilled, (state, action: PayloadAction<any>) => {
-        const approvedPlan = action.payload?.plan ?? action.payload?.data;
-        if (approvedPlan) {
-          state.activePlan = approvedPlan;
-          const idx = state.plans.findIndex((p) => p.id === approvedPlan.id);
-          if (idx !== -1) {
-            state.plans[idx] = approvedPlan;
+      .addCase(generatePlan.rejected, (state) => { state.isGenerating = false; })
+      .addCase(resolveConflict.pending, (state) => { state.isResolving = true; })
+      .addCase(resolveConflict.fulfilled, (state, action) => {
+        state.isResolving = false;
+        if (state.activePlan && state.activePlan.conflicts) {
+          const conflict = state.activePlan.conflicts.find((c: any) => c.id === action.meta.arg.conflictId);
+          if (conflict) {
+            conflict.resolution_status = action.meta.arg.resolutionData.resolutionStatus || 'RESOLVED';
           }
-        } else if (state.activePlan) {
-          state.activePlan.status = 'APPROVED';
-          state.activePlan.approvalState = 'APPROVED';
-        }
-      });
-
-    // fetchPlanningRuns
-    builder.addCase(fetchPlanningRuns.fulfilled, (state, action: PayloadAction<any>) => {
-      state.planningRuns = action.payload?.data ?? [];
-    });
-
-    // checkAIEngineHealth — sole authority over CONNECTED / ERROR planningState
-    builder
-      .addCase(checkAIEngineHealth.pending, (state) => {
-        // Only update to IDLE when we haven't established a connection yet.
-        // If already CONNECTED / SUCCESS / NO_FEASIBLE_PLAN, keep the existing state
-        // so the badge doesn't flicker on every poll.
-        if (state.planningState === 'IDLE' || state.planningState === 'ERROR') {
-          state.planningState = 'IDLE';
         }
       })
-      .addCase(checkAIEngineHealth.fulfilled, (state) => {
-        // Mark CONNECTED only if we are not in the middle of a planning run
-        if (
-          state.planningState !== 'CALCULATING' &&
-          state.planningState !== 'RE_OPTIMIZING'
-        ) {
-          state.planningState = 'CONNECTED';
-        }
-      })
-      .addCase(checkAIEngineHealth.rejected, (state) => {
-        // Mark ERROR only if we are not mid-calculation (avoid overwriting CALCULATING)
-        if (
-          state.planningState !== 'CALCULATING' &&
-          state.planningState !== 'RE_OPTIMIZING'
-        ) {
-          state.planningState = 'ERROR';
-        }
-      });
-  },
+      .addCase(resolveConflict.rejected, (state) => { state.isResolving = false; });
+  }
 });
 
-export const { clearPlanError, setPlanningState, setActivePlan, setActivePlanningRun, updateTaskSchedule } = planSlice.actions;
-export const generatePlan = submitPlanningRun;
 export default planSlice.reducer;
